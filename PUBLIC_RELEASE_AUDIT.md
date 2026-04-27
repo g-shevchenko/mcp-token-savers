@@ -8,8 +8,9 @@ Run this checklist before publishing or tagging a release.
       for official company distribution.
 - [ ] Choose a license. Recommended default for broad reuse: MIT. Use Apache-2.0
       if patent language matters.
-- [ ] Confirm whether the public repo should keep the `HWAI` name or use a more
-      generic name such as `agentic-mcp-stack`.
+- [ ] Confirm public prose uses `Humanswith.ai` as the brand. Keep `HWAI` only
+      where it is a technical identifier, such as env vars, package scopes,
+      paths, or the repository slug.
 
 ## Required checks
 

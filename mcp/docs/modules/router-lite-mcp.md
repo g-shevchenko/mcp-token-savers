@@ -1,6 +1,6 @@
 # router-lite-mcp
 
-Local-first deterministic MCP trigger/skip policy router for HWAI utility prep tools
+Local-first deterministic MCP trigger/skip policy router for Humanswith.ai utility prep tools
 
 ## Role in the stack
 

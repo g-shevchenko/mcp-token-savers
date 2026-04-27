@@ -1,6 +1,6 @@
 {
   "schema_version": "hwai-mcp-public-bundle.v1",
-  "bundle_name": "HWAI MCP Stack",
+  "bundle_name": "Humanswith.ai MCP Stack",
   "default_profile": "core",
   "distribution_repo": "https://github.com/g-shevchenko/hwai-mcp-stack.git",
   "bundled_source_dir": "source",

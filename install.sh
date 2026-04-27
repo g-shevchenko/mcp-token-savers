@@ -97,7 +97,7 @@ case "$CLIENTS" in
   *) die "Unknown clients value: $CLIENTS" ;;
 esac
 
-log "HWAI MCP public installer"
+log "Humanswith.ai MCP public installer"
 printf 'profile=%s\nclients=%s\nworkspace=%s\nrepo_url=%s\nrepo_dir=%s\nbranch=%s\n' "$PROFILE" "$CLIENTS" "$WORKSPACE" "$REPO_URL" "$REPO_DIR" "$BRANCH"
 
 log "Checking local prerequisites"

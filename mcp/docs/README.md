@@ -1,6 +1,6 @@
-# HWAI MCP Stack Docs
+# Humanswith.ai MCP Stack Docs
 
-Public-prep documentation for the self-contained MCP bundle.
+Public documentation for the self-contained MCP bundle.
 
 - [Module docs](./modules/)
 

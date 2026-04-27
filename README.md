@@ -1,4 +1,4 @@
-# HWAI MCP Stack
+# Humanswith.ai MCP Stack
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/g-shevchenko/hwai-mcp-stack?style=social)](https://github.com/g-shevchenko/hwai-mcp-stack/stargazers)
@@ -15,7 +15,7 @@ adapters are optional and require your own endpoints and bearer keys.
 ## Why
 
 Modern coding agents are strongest when they see the right evidence, not the
-largest possible prompt. HWAI MCP Stack gives them deterministic prep tools:
+largest possible prompt. Humanswith.ai MCP Stack gives them deterministic prep tools:
 
 - find the right files before editing;
 - compact huge logs, specs, traces, screenshots, and dependency reports;
@@ -129,7 +129,7 @@ warnings: 0
 - Better module-by-module token-savings reports.
 - More one-click client installers.
 - Public example fixtures for screenshots, traces, logs, and repo hygiene.
-- Optional hosted external-context templates that do not require HWAI internal
+- Optional hosted external-context templates that do not require Humanswith.ai internal
   infrastructure.
 
 ## License

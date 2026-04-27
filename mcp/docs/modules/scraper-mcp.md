@@ -4,7 +4,7 @@ Stdio MCP wrapper over scraper-core HTTP API. Proactive fetcher for Claude Code 
 
 ## Role in the stack
 
-Stdio wrapper over shared HWAI scraper-core fetch/extract/browser stack.
+Stdio wrapper over a Humanswith.ai scraper-core-compatible fetch/extract/browser stack.
 
 ## When agents should use it
 

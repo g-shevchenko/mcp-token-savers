@@ -1,7 +1,7 @@
 # MCP Bundle
 
 This directory contains the installer, manifest, docs, and bundled source for
-the 21-module HWAI MCP Stack.
+the 21-module Humanswith.ai MCP Stack.
 
 Use the repository-level `install.sh` for one-command public installs. Use this
 directory directly only when you already have a local clone:
