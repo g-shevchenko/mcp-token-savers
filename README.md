@@ -1,7 +1,9 @@
 # Humanswith.ai MCP Stack
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/g-shevchenko/hwai-mcp-stack?style=social)](https://github.com/g-shevchenko/hwai-mcp-stack/stargazers)
+[![CI](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/codeql.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/scorecard.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/scorecard.yml)
 [![Last commit](https://img.shields.io/github/last-commit/g-shevchenko/hwai-mcp-stack)](https://github.com/g-shevchenko/hwai-mcp-stack/commits/main)
 [![MCP](https://img.shields.io/badge/MCP-21%20servers-blue)](./mcp/manifest.json)
 
@@ -23,12 +25,39 @@ largest possible prompt. Humanswith.ai MCP Stack gives them deterministic prep t
 - keep raw local evidence local by default;
 - work across Claude Code, Codex, Cursor, and Windsurf with the same MCP config.
 
+## Verify First, Then Install
+
+Recommended inspect-first path:
+
+```bash
+git clone https://github.com/g-shevchenko/hwai-mcp-stack.git
+cd hwai-mcp-stack
+bash scripts/agent-preinstall-check.sh
+bash install.sh --dry-run
+bash install.sh
+```
+
+This gives a human or agentic IDE a concrete trust path before anything is
+installed: inspect the installer, run the public audit, run doctor, and see the
+exact write targets in dry-run output.
+
+See [Trust and verification](./TRUST.md) and
+[Verify before install](./VERIFY_BEFORE_INSTALL.md). Agents can also read the
+machine-readable [trust manifest](./trust/hwai-mcp-stack.trust.json).
+
 ## 60-Second Install
 
-Safe local-first install:
+Fast local-first install after inspection:
 
 ```bash
 /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
+```
+
+For repeatable installs, prefer a release tag or commit SHA instead of `main`:
+
+```bash
+HWAI_MCP_BRANCH=v0.1.0 \
+/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/v0.1.0/install.sh)"
 ```
 
 Install all 21 MCP servers:
@@ -105,9 +134,12 @@ warnings: 0
 
 ## Privacy And Security
 
+- Do not trust the repository from GitHub stars or social proof; inspect and
+  verify it with `bash scripts/agent-preinstall-check.sh`.
 - Local repo/file evidence stays local by default.
 - Durable traces live under `~/.hwai/<service-name>`.
 - Generated client configs point to local stdio wrappers.
+- The default install path does not use `sudo` and does not install daemons.
 - Aggregate reports should not export raw code, prompts, URLs, screenshots,
   lockfiles, env files, or private docs.
 - External-context MCPs do not work until you provide your own endpoint URLs and
@@ -133,6 +165,9 @@ warnings: 0
 - [MCP bundle details](./mcp/README.md)
 - [Module docs](./mcp/docs/README.md)
 - [Agent autopilot docs](./mcp/docs/AGENT_AUTOPILOT.md)
+- [Trust and verification](./TRUST.md)
+- [Verify before install](./VERIFY_BEFORE_INSTALL.md)
+- [Machine-readable trust manifest](./trust/hwai-mcp-stack.trust.json)
 - [Public release audit](./PUBLIC_RELEASE_AUDIT.md)
 - [Security policy](./SECURITY.md)
 

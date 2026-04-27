@@ -1,0 +1,31 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/mcp/source/services/router-lite-mcp"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/mcp/source/services/retrieval-mcp"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/mcp/source/services/context-prep-mcp"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/mcp/source/services/static-analysis-mcp"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/mcp/source/services/repo-history-mcp"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/mcp/source/services/repo-quality-gate-mcp"
+    schedule:
+      interval: "weekly"
+

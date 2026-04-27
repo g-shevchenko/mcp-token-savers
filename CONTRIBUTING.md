@@ -11,6 +11,7 @@ private dependencies, no secrets.
 Run:
 
 ```bash
+bash scripts/agent-preinstall-check.sh
 bash scripts/public-release-audit.sh
 ```
 
@@ -37,6 +38,11 @@ node mcp/bin/hwai-mcp.mjs doctor \
   coverage, and the README table.
 - If you change install behavior, update the one-command install docs and prove
   the clean install or dry-run path.
+- If you change trust posture, update `TRUST.md`, `VERIFY_BEFORE_INSTALL.md`,
+  `trust/hwai-mcp-stack.trust.json`, and `scripts/agent-preinstall-check.sh`
+  in the same PR.
+- Keep public install examples inspect-first. Any `curl | bash` example must
+  point to an inspectable repo script and should have a tagged-release variant.
 - Keep the local project teaching layer on by default. Install changes must
   continue to write agent docs/rules and natural-language trigger vocabulary
   unless the user explicitly selects a config-only repair mode.

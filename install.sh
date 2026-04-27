@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"; then
+  :
+else
+  SCRIPT_DIR="$PWD"
+fi
 PROFILE="${HWAI_MCP_PROFILE:-core}"
 CLIENTS="${HWAI_MCP_CLIENTS:-auto}"
 WORKSPACE="${HWAI_MCP_WORKSPACE:-$PWD}"
@@ -23,7 +28,7 @@ Options:
   --workspace=/absolute/project/path                        Default: current dir
   --repo-dir=/absolute/path                                 Default: ~/.hwai/hwai-mcp-stack
   --repo-url=https://github.com/OWNER/REPO.git              Default: public repo URL
-  --branch=main                                             Default: main
+  --branch=main|vX.Y.Z|COMMIT_SHA                           Default: main
   --skip-build                                              Pass through to mcp/install.sh
   --dry-run                                                 Pass through to mcp/install.sh
   --no-update                                               Do not pull an existing clone
@@ -34,6 +39,12 @@ Environment overrides:
   HWAI_MCP_PROFILE, HWAI_MCP_CLIENTS, HWAI_MCP_REPO_SLUG,
   HWAI_MCP_REPO_URL, HWAI_MCP_REPO_DIR, HWAI_MCP_BRANCH,
   HWAI_MCP_AGENT_DOCS
+
+Trust-first flow:
+  git clone https://github.com/g-shevchenko/hwai-mcp-stack.git
+  cd hwai-mcp-stack
+  bash scripts/agent-preinstall-check.sh
+  bash install.sh --dry-run
 EOF
 }
 
@@ -119,13 +130,18 @@ printf 'npm=%s\n' "$(npm --version)"
 
 log "Preparing local bundle clone"
 mkdir -p "$(dirname "$REPO_DIR")"
-if [[ -e "$REPO_DIR" && ! -d "$REPO_DIR/.git" ]]; then
+if [[ "$DRY_RUN" == "1" && -f "$SCRIPT_DIR/mcp/install.sh" ]]; then
+  echo "dry-run enabled; using local checkout at $SCRIPT_DIR instead of cloning/updating $REPO_DIR"
+  REPO_DIR="$SCRIPT_DIR"
+elif [[ -e "$REPO_DIR" && ! -d "$REPO_DIR/.git" ]]; then
   BACKUP_DIR="${REPO_DIR}.bak.$(stamp)"
   echo "Existing non-git path found at $REPO_DIR; moving to $BACKUP_DIR"
   mv "$REPO_DIR" "$BACKUP_DIR"
 fi
 
-if [[ -d "$REPO_DIR/.git" ]]; then
+if [[ "$DRY_RUN" == "1" && -f "$REPO_DIR/mcp/install.sh" ]]; then
+  :
+elif [[ -d "$REPO_DIR/.git" ]]; then
   git -C "$REPO_DIR" remote set-url origin "$REPO_URL"
   if [[ "$NO_UPDATE" == "1" ]]; then
     echo "no-update enabled; keeping existing clone"

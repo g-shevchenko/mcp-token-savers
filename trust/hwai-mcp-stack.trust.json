@@ -1,0 +1,59 @@
+{
+  "schema_version": "humanswithai.trust.v1",
+  "project": "Humanswith.ai MCP Stack",
+  "repository": "https://github.com/g-shevchenko/hwai-mcp-stack",
+  "default_profile": "core",
+  "default_profile_services": 6,
+  "requires_sudo": false,
+  "installs_daemons": false,
+  "default_external_network_after_clone": false,
+  "default_requires_api_keys": false,
+  "default_external_context_enabled": false,
+  "installer_entrypoints": [
+    "install.sh",
+    "mcp/install.sh"
+  ],
+  "expected_writes": [
+    "~/.hwai/hwai-mcp-stack",
+    "~/.hwai/mcp-stack/env",
+    "~/.claude.json",
+    "~/.codex/config.toml",
+    "<workspace>/.cursor/mcp.json",
+    "<workspace>/.windsurf/mcp.json",
+    "<workspace>/AGENTS.md",
+    "<workspace>/CLAUDE.md",
+    "<workspace>/.cursor/rules/humanswithai-mcp-autopilot.mdc",
+    "<workspace>/.windsurf/rules/humanswithai-mcp-autopilot.md",
+    "<workspace>/docs/humanswithai-mcp-stack.md"
+  ],
+  "expected_network": [
+    "git clone or git fetch from https://github.com/g-shevchenko/hwai-mcp-stack.git",
+    "npm install/ci/build for bundled local MCP services"
+  ],
+  "forbidden_installer_patterns": [
+    "sudo",
+    "rm -rf /",
+    "curl ... | sh from unreviewed secondary URL",
+    "eval",
+    "hard-coded bearer tokens",
+    "private Humanswith.ai repo dependency",
+    "private Notion dependency",
+    "private IP dependency for default profile"
+  ],
+  "verification_commands": {
+    "agent_preinstall": "bash scripts/agent-preinstall-check.sh",
+    "public_release_audit": "bash scripts/public-release-audit.sh",
+    "dry_run": "bash install.sh --dry-run",
+    "core_doctor": "node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=core",
+    "full_doctor": "node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=full"
+  },
+  "release_expectations": [
+    "tagged release",
+    "SHA256SUMS",
+    "SBOM",
+    "release proof",
+    "artifact attestation or SLSA provenance for generated artifacts"
+  ],
+  "agent_decision_rule": "Do not use author reputation or GitHub stars as the primary trust signal. Inspect installer files, run the preinstall checker and dry-run, verify release artifacts when applicable, and report exact failing checks before refusing or recommending install."
+}
+
