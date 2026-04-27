@@ -10,12 +10,13 @@ directory directly only when you already have a local clone:
 ~/.hwai/hwai-mcp-stack/mcp/install.sh --profile=core --clients=auto
 ```
 
-By default the installer also writes repo-local agent guidance into the target
-workspace: `docs/humanswithai-mcp-stack.md`, managed blocks in `AGENTS.md` and
-`CLAUDE.md`, and Cursor/Windsurf rules when those clients are selected.
+By default the installer also teaches the target workspace how to use the stack:
+`docs/humanswithai-mcp-stack.md`, managed blocks in `AGENTS.md` and
+`CLAUDE.md`, and Cursor/Windsurf rules when those clients are selected. This
+default is part of the product for beginner users, not an optional add-on.
 
-Skip that layer only when you intentionally want MCP config without local agent
-instructions:
+Skip that layer only when you intentionally want config-only repair without
+local agent instructions:
 
 ```bash
 ~/.hwai/hwai-mcp-stack/mcp/install.sh --profile=core --clients=auto --agent-docs=skip

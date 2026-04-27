@@ -37,6 +37,9 @@ node mcp/bin/hwai-mcp.mjs doctor \
   coverage, and the README table.
 - If you change install behavior, update the one-command install docs and prove
   the clean install or dry-run path.
+- Keep the local project teaching layer on by default. Install changes must
+  continue to write agent docs/rules and natural-language trigger vocabulary
+  unless the user explicitly selects a config-only repair mode.
 
 ## Security
 

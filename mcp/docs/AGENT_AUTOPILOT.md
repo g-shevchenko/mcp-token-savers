@@ -6,13 +6,15 @@ The installer does two things:
 2. Writes local project instructions that teach those agents when to use the
    stack from natural language.
 
-This second step is enabled by default:
+This second step is enabled by default and is part of the release contract. It
+is especially important for beginner users: they should describe the task in
+plain language, not memorize MCP tool names.
 
 ```bash
 HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
 ```
 
-To skip local docs/rules updates:
+To skip local docs/rules updates only for config-only repair:
 
 ```bash
 HWAI_MCP_AGENT_DOCS=skip /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"

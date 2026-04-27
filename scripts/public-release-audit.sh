@@ -114,11 +114,29 @@ if [[ -f mcp/install.sh ]]; then
     fail "Install dry-run"
   fi
   tmp_workspace="$(mktemp -d)"
-  if bash mcp/install.sh --profile=core --clients=auto --workspace="$tmp_workspace" --skip-build --dry-run; then
-    pass "Install dry-run with agent docs"
+  agent_docs_output="$(mktemp)"
+  if bash mcp/install.sh --profile=core --clients=auto --workspace="$tmp_workspace" --skip-build --dry-run | tee "$agent_docs_output"; then
+    missing_agent_docs=0
+    for expected in \
+      "$tmp_workspace/docs/humanswithai-mcp-stack.md" \
+      "$tmp_workspace/AGENTS.md" \
+      "$tmp_workspace/CLAUDE.md" \
+      "$tmp_workspace/.cursor/rules/humanswithai-mcp-autopilot.mdc" \
+      "$tmp_workspace/.windsurf/rules/humanswithai-mcp-autopilot.md"; do
+      if ! grep -F "$expected" "$agent_docs_output" >/dev/null; then
+        printf 'missing expected agent-docs target in dry-run: %s\n' "$expected" >&2
+        missing_agent_docs=1
+      fi
+    done
+    if [[ "$missing_agent_docs" == "0" ]]; then
+      pass "Install dry-run with agent docs"
+    else
+      fail "Install dry-run with agent docs"
+    fi
   else
     fail "Install dry-run with agent docs"
   fi
+  rm -f "$agent_docs_output"
   rm -rf "$tmp_workspace"
 else
   pass "Install dry-run skipped; mcp/install.sh not present"

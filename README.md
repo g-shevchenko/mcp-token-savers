@@ -48,11 +48,16 @@ Requirements: macOS/Linux shell, `git`, Node.js, and `npm`.
 After installation, restart Claude Code, Codex, Cursor, or Windsurf, or open a
 new chat so stdio MCP configs reload.
 
-The installer also writes local agent guidance into your project so Claude Code,
-Codex, Cursor, and Windsurf know when to use the downloaded MCPs from natural
-language. It updates only managed Humanswith.ai blocks/rules and creates
-`docs/humanswithai-mcp-stack.md`. To skip that step, set
-`HWAI_MCP_AGENT_DOCS=skip`.
+By default the installer also teaches the local project how to use the stack:
+Claude Code, Codex, Cursor, and Windsurf get repo-local guidance, managed
+Humanswith.ai blocks/rules, and a natural-language trigger vocabulary. This is
+intentional for beginner-friendly Agentic Engineering workflows: users should be
+able to write "find where this is implemented", "summarize this CI log", or
+"check this screenshot", and the agent should know which MCP to consider.
+
+The installer updates only managed Humanswith.ai blocks/rules and creates
+`docs/humanswithai-mcp-stack.md`. To skip that project-teaching layer for a
+config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 
 ## What You Get
 

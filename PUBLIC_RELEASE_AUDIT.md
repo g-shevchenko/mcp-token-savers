@@ -44,5 +44,7 @@ bash mcp/install.sh --profile=core --clients=auto --workspace="$(mktemp -d)" --s
   checklist agree on install, proof, and no-secret expectations.
 - Any `curl | bash` install path has an inspectable script in the repo and a
   dry-run or doctor proof.
-- One-command install updates local agent docs/rules by default, or documents
-  `HWAI_MCP_AGENT_DOCS=skip` / `--agent-docs=skip`.
+- One-command install updates local agent docs/rules by default and proves that
+  `AGENTS.md`, `CLAUDE.md`, Cursor/Windsurf rules, and
+  `docs/humanswithai-mcp-stack.md` would be written. `HWAI_MCP_AGENT_DOCS=skip`
+  / `--agent-docs=skip` is documented only as a config-only repair opt-out.

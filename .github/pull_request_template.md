@@ -7,6 +7,7 @@
 - [ ] `bash scripts/public-release-audit.sh`
 - [ ] `node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=full`
 - [ ] Install/doctor docs updated if install behavior changed
+- [ ] Agent-docs dry-run still shows local project guidance/rules are written by default
 
 ## Public Release Gate
 
@@ -14,3 +15,4 @@
 - [ ] No required dependency on private repos, private Notion pages, local machine paths, or Humanswith.ai internal infrastructure
 - [ ] Public prose uses `Humanswith.ai`; `HWAI` remains only in technical identifiers
 - [ ] New/changed modules are represented in manifest, docs, README tables, and doctor proof
+- [ ] One-command install still teaches the local project by default; opt-out is config-only repair
