@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "codex/**"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Public audit and doctor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: Use Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install audit utilities
+        run: sudo apt-get update && sudo apt-get install -y shellcheck ripgrep
+      - name: Shell syntax
+        run: |
+          bash -n install.sh
+          bash -n mcp/install.sh
+          bash -n scripts/public-release-audit.sh
+          bash -n scripts/agent-preinstall-check.sh
+      - name: Shellcheck installers and audit scripts
+        run: shellcheck install.sh mcp/install.sh scripts/public-release-audit.sh scripts/agent-preinstall-check.sh
+      - name: Public release audit
+        run: bash scripts/public-release-audit.sh
+      - name: Agent preinstall check
+        run: bash scripts/agent-preinstall-check.sh
+      - name: Full doctor
+        run: node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=full
+
+  service-builds:
+    name: Service build checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: Use Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: "mcp/source/services/*/package-lock.json"
+      - name: Build every bundled service
+        run: |
+          set -euo pipefail
+          for package_json in mcp/source/services/*/package.json; do
+            service_dir="$(dirname "$package_json")"
+            echo "==> $service_dir"
+            (cd "$service_dir" && npm ci && npm run build --if-present && npm test --if-present)
+          done
+
+  sbom:
+    name: SBOM generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - name: Use Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Generate SBOM
+        run: node scripts/generate-sbom.mjs sbom.cdx.json
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sbom.cdx.json
+          path: sbom.cdx.json

@@ -4,10 +4,12 @@
 
 ## Proof
 
+- [ ] `bash scripts/agent-preinstall-check.sh`
 - [ ] `bash scripts/public-release-audit.sh`
 - [ ] `node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=full`
 - [ ] Install/doctor docs updated if install behavior changed
 - [ ] Agent-docs dry-run still shows local project guidance/rules are written by default
+- [ ] Trust docs/manifest updated if install paths, network behavior, release proof, or external-context behavior changed
 
 ## Public Release Gate
 
@@ -15,4 +17,6 @@
 - [ ] No required dependency on private repos, private Notion pages, local machine paths, or Humanswith.ai internal infrastructure
 - [ ] Public prose uses `Humanswith.ai`; `HWAI` remains only in technical identifiers
 - [ ] New/changed modules are represented in manifest, docs, README tables, and doctor proof
+- [ ] A third-party agent can verify before install using `TRUST.md`, `VERIFY_BEFORE_INSTALL.md`, `trust/hwai-mcp-stack.trust.json`, and `scripts/agent-preinstall-check.sh`
+- [ ] Public install docs show clone-first verification before any `curl | bash` fast path
 - [ ] One-command install still teaches the local project by default; opt-out is config-only repair
