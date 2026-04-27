@@ -2,6 +2,12 @@
 
 Run this checklist before publishing or tagging a release.
 
+Fast path:
+
+```bash
+bash scripts/public-release-audit.sh
+```
+
 ## Required decisions
 
 - [ ] Choose GitHub owner: `g-shevchenko` for personal OSS, or `humanswith-ai`
@@ -11,6 +17,9 @@ Run this checklist before publishing or tagging a release.
 - [ ] Confirm public prose uses `Humanswith.ai` as the brand. Keep `HWAI` only
       where it is a technical identifier, such as env vars, package scopes,
       paths, or the repository slug.
+- [ ] Confirm the repository is self-contained and does not require access to
+      private Humanswith.ai repos, private Notion pages, local machine paths, or
+      internal infrastructure for the default install path.
 
 ## Required checks
 
@@ -30,3 +39,7 @@ bash mcp/install.sh --profile=core --clients=codex --workspace="$PWD" --skip-bui
 - External-context modules require user-supplied endpoints and keys.
 - Internal Notion, Telegram, Railway, private repo, team rollout, and personal
   repository references are absent or documented only as sanitized examples.
+- `README.md`, `mcp/README.md`, `SECURITY.md`, `CONTRIBUTING.md`, and the PR
+  checklist agree on install, proof, and no-secret expectations.
+- Any `curl | bash` install path has an inspectable script in the repo and a
+  dry-run or doctor proof.
