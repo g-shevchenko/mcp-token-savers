@@ -10,6 +10,17 @@ directory directly only when you already have a local clone:
 ~/.hwai/hwai-mcp-stack/mcp/install.sh --profile=core --clients=auto
 ```
 
+By default the installer also writes repo-local agent guidance into the target
+workspace: `docs/humanswithai-mcp-stack.md`, managed blocks in `AGENTS.md` and
+`CLAUDE.md`, and Cursor/Windsurf rules when those clients are selected.
+
+Skip that layer only when you intentionally want MCP config without local agent
+instructions:
+
+```bash
+~/.hwai/hwai-mcp-stack/mcp/install.sh --profile=core --clients=auto --agent-docs=skip
+```
+
 ## Profiles
 
 | Profile | Purpose |
@@ -47,3 +58,8 @@ env file.
 Doctor checks service folders, `package.json`, build scripts, and executable
 stdio wrappers. It does not read request logs, feedback logs, screenshots,
 traces, env files, credentials, Notion bodies, or raw code bodies.
+
+## Agent Autopilot
+
+See [Agent Autopilot Docs](./docs/AGENT_AUTOPILOT.md) for the natural-language
+trigger vocabulary that the installer places into local project docs/rules.

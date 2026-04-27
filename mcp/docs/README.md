@@ -3,6 +3,7 @@
 Public documentation for the self-contained MCP bundle.
 
 - [Module docs](./modules/)
+- [Agent autopilot docs](./AGENT_AUTOPILOT.md)
 
 ## Modules
 

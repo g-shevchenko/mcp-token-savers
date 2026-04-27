@@ -6,6 +6,8 @@ import childProcess from "node:child_process";
 
 const DEFAULT_CLIENTS = ["claude", "codex", "cursor", "windsurf"];
 const DEFAULT_PROFILE = "core";
+const AGENT_DOCS_BEGIN = "<!-- BEGIN HUMANSWITHAI_MCP_AUTOPILOT -->";
+const AGENT_DOCS_END = "<!-- END HUMANSWITHAI_MCP_AUTOPILOT -->";
 
 function argValue(name, fallback = "") {
   const prefix = `--${name}=`;
@@ -46,6 +48,14 @@ function writeText(filePath, content, dryRun) {
   }
   fs.writeFileSync(filePath, content);
   console.log(`updated ${filePath}`);
+}
+
+function writeTextIfChanged(filePath, content, dryRun) {
+  if (fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === content) {
+    console.log(`unchanged ${filePath}`);
+    return;
+  }
+  writeText(filePath, content, dryRun);
 }
 
 function expandHome(label) {
@@ -182,6 +192,150 @@ function installClaude(workspace, items, dryRun) {
   console.log(`claude project entries touched: ${targets.length}`);
 }
 
+function clientListLabel(clients) {
+  return clients.join(", ");
+}
+
+function serviceListLabel(services) {
+  return services.map((service) => `\`${service}\``).join(", ");
+}
+
+function naturalTriggerTable() {
+  return [
+    "| User wording, not commands | Agent should consider |",
+    "| --- | --- |",
+    "| \"where is this implemented\", \"найди где живет\", \"что менять\", \"before editing find context\" | `retrieval-mcp`, `language-graph-mcp`, `repo-history-mcp` |",
+    "| \"huge log\", \"CI output\", \"stack trace\", \"summarize this long spec\", \"длинные логи\" | `context-prep-mcp` |",
+    "| \"is this safe to merge\", \"quality gate\", \"static check\", \"перед PR проверь\" | `static-analysis-mcp`, `repo-quality-gate-mcp` |",
+    "| \"repo is growing\", \"find stale docs\", \"cleanup docs\", \"мусор в репо\" | `repo-hygiene-mcp`, `docs-hygiene-mcp`, `docs-sync-mcp` |",
+    "| \"API/schema changed\", \"contract drift\", \"dependency risk\", \"lockfile risk\" | `contract-schema-mcp`, `dependency-risk-mcp` |",
+    "| \"Playwright trace\", \"trace.zip\", \"HAR\", \"why did this browser test fail\" | `playwright-trace-mcp`, `agent-trace-mcp` |",
+    "| \"screenshot\", \"visual diff\", \"compare UI\", \"скриншот\", \"визуально проверь\" | `vision-mcp`, `visual-baseline-mcp` |",
+    "| \"search web\", \"read this URL\", \"crawl\", \"SERP\", \"extract from page\" | optional `scraper-mcp`, `searxng-mcp`, `reader-mcp`, `crawl4ai-mcp` when endpoints/keys are configured |",
+  ].join("\n");
+}
+
+function agentAutopilotBlock({ profile, clients, services }) {
+  return [
+    "## Humanswith.ai MCP Autopilot",
+    "",
+    `Installed MCP profile: \`${profile}\`.`,
+    `Configured clients: ${clientListLabel(clients)}.`,
+    `Available MCP services: ${serviceListLabel(services)}.`,
+    "",
+    "Use these MCPs as local-first prep tools when the user's natural wording asks for repo context, log compaction, browser traces, screenshots, dependency/schema checks, documentation hygiene, or external context. The user does not need to type tool names.",
+    "",
+    "Core behavior:",
+    "",
+    "- Prefer MCP prep before spending large frontier-model context on noisy logs, traces, screenshots, or repo-wide search.",
+    "- Skip MCP prep for tiny conceptual answers or exact-file edits where the relevant file is already obvious.",
+    "- Always read exact files before editing. MCP retrieval narrows context; it does not replace source inspection.",
+    "- Keep frontier reasoning for ambiguous, high-risk, architecture-heavy, security-sensitive, or final-output-sensitive decisions.",
+    "- Never send raw code, secrets, env files, lockfiles, screenshots, traces, private docs, or raw prompts to external services.",
+    "- For external web/search/crawl MCPs, use only user-configured endpoints and bearer keys from local env.",
+    "",
+    "Natural trigger vocabulary:",
+    "",
+    naturalTriggerTable(),
+    "",
+    "More detail: `docs/humanswithai-mcp-stack.md`.",
+  ].join("\n");
+}
+
+function markdownDoc({ profile, clients, services }) {
+  return [
+    "# Humanswith.ai MCP Stack",
+    "",
+    "This project has been connected to the Humanswith.ai MCP Stack.",
+    "",
+    `- Installed profile: \`${profile}\``,
+    `- Configured clients: ${clientListLabel(clients)}`,
+    `- Available MCP services: ${serviceListLabel(services)}`,
+    "",
+    "## How Agents Should Use It",
+    "",
+    "The stack is not a set of slash commands for the user to memorize. It is a local prep layer for Claude Code, Codex, Cursor, and Windsurf. Agents should infer when to use it from natural language.",
+    "",
+    naturalTriggerTable(),
+    "",
+    "## Safety Rules",
+    "",
+    "- Local repo/file evidence stays local by default.",
+    "- External-context tools require user-provided endpoints and bearer keys.",
+    "- Agents still inspect exact files before edits.",
+    "- MCPs reduce noise and token waste; they do not replace frontier reasoning for hard judgment calls.",
+    "- Do not commit `~/.hwai/mcp-stack/env`, generated MCP configs with secrets, traces, logs, screenshots, or request artifacts.",
+    "",
+    "## Maintenance",
+    "",
+    "Re-run the installer from the project root after stack updates. Use `HWAI_MCP_AGENT_DOCS=skip` or `--agent-docs=skip` only if you intentionally do not want these local agent instructions updated.",
+    "",
+  ].join("\n");
+}
+
+function cursorRule({ profile, clients, services }) {
+  return [
+    "---",
+    "description: Humanswith.ai MCP Stack autopilot trigger vocabulary",
+    "alwaysApply: true",
+    "---",
+    "",
+    "# Humanswith.ai MCP Stack Autopilot",
+    "",
+    agentAutopilotBlock({ profile, clients, services }),
+  ].join("\n");
+}
+
+function windsurfRule({ profile, clients, services }) {
+  return [
+    "---",
+    "trigger: always_on",
+    "description: Humanswith.ai MCP Stack autopilot trigger vocabulary",
+    "---",
+    "",
+    "# Humanswith.ai MCP Stack Autopilot",
+    "",
+    agentAutopilotBlock({ profile, clients, services }),
+  ].join("\n");
+}
+
+function upsertManagedBlock(filePath, block, dryRun) {
+  const managed = `${AGENT_DOCS_BEGIN}\n${block.trim()}\n${AGENT_DOCS_END}\n`;
+  let next;
+  if (fs.existsSync(filePath)) {
+    const existing = fs.readFileSync(filePath, "utf8");
+    const pattern = new RegExp(`${AGENT_DOCS_BEGIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[\\s\\S]*?${AGENT_DOCS_END.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n?`);
+    next = pattern.test(existing)
+      ? existing.replace(pattern, managed)
+      : `${existing.trimEnd()}\n\n${managed}`;
+  } else {
+    next = managed;
+  }
+  writeTextIfChanged(filePath, next, dryRun);
+}
+
+function installAgentDocs({ workspace, profile, clients, services, dryRun, mode }) {
+  if (mode === "skip") {
+    console.log("agent-docs skipped");
+    return;
+  }
+  const context = { profile, clients, services };
+  writeTextIfChanged(path.join(workspace, "docs", "humanswithai-mcp-stack.md"), markdownDoc(context), dryRun);
+
+  if (clients.includes("codex")) {
+    upsertManagedBlock(path.join(workspace, "AGENTS.md"), agentAutopilotBlock(context), dryRun);
+  }
+  if (clients.includes("claude")) {
+    upsertManagedBlock(path.join(workspace, "CLAUDE.md"), agentAutopilotBlock(context), dryRun);
+  }
+  if (clients.includes("cursor")) {
+    writeTextIfChanged(path.join(workspace, ".cursor", "rules", "humanswithai-mcp-autopilot.mdc"), cursorRule(context), dryRun);
+  }
+  if (clients.includes("windsurf")) {
+    writeTextIfChanged(path.join(workspace, ".windsurf", "rules", "humanswithai-mcp-autopilot.md"), windsurfRule(context), dryRun);
+  }
+}
+
 function ensureEnvFile(manifest, services, envFile, dryRun) {
   const required = [...new Set(services.flatMap((serviceId) => manifest.services[serviceId]?.required_env || []))];
   const optional = [...new Set(services.flatMap((serviceId) => manifest.services[serviceId]?.optional_env || []))];
@@ -278,6 +432,10 @@ function install() {
   const dryRun = hasFlag("dry-run");
   const skipBuild = hasFlag("skip-build");
   const clients = selectedClients(argValue("clients", "auto"));
+  const agentDocs = argValue("agent-docs", "auto");
+  if (!["auto", "skip"].includes(agentDocs)) {
+    throw new Error(`unknown agent-docs value: ${agentDocs}`);
+  }
   const services = resolveProfile(manifest, profile);
   const envFile = expandHome(manifest.workspace_env_file || "$HOME/.hwai/mcp-stack/env");
 
@@ -293,6 +451,7 @@ function install() {
     else throw new Error(`unknown client: ${client}`);
   }
 
+  installAgentDocs({ workspace, profile, clients, services, dryRun, mode: agentDocs });
   doctor({ manifest, sourceRoot, services });
   console.log("HWAI MCP stack install complete. Restart clients or open a new chat so stdio MCP configs reload.");
 }
@@ -308,7 +467,7 @@ function main() {
   else if (command === "doctor") doctor({ manifest, sourceRoot, services });
   else {
     console.log(`Usage:
-  hwai-mcp install --manifest=manifest.json --source-root=/path/repo --workspace=/path/project [--profile=core] [--clients=auto] [--dry-run] [--skip-build]
+  hwai-mcp install --manifest=manifest.json --source-root=/path/repo --workspace=/path/project [--profile=core] [--clients=auto] [--agent-docs=auto|skip] [--dry-run] [--skip-build]
   hwai-mcp doctor  --manifest=manifest.json --source-root=/path/repo [--profile=core]
 `);
   }

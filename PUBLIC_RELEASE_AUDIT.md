@@ -30,6 +30,7 @@ find . -name node_modules -o -name dist -o -name .env -o -name '*.jsonl' -o -nam
 rg -n -i '(api[_-]?key|token|secret|password|bearer|authorization|telegram|notion|chat_id|CREDENTIALS|hwai-internal|greg-personal|r2[-_]?d2|railway|webhook)' .
 node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=core
 bash mcp/install.sh --profile=core --clients=codex --workspace="$PWD" --skip-build --dry-run
+bash mcp/install.sh --profile=core --clients=auto --workspace="$(mktemp -d)" --skip-build --dry-run
 ```
 
 ## Expected public posture
@@ -43,3 +44,5 @@ bash mcp/install.sh --profile=core --clients=codex --workspace="$PWD" --skip-bui
   checklist agree on install, proof, and no-secret expectations.
 - Any `curl | bash` install path has an inspectable script in the repo and a
   dry-run or doctor proof.
+- One-command install updates local agent docs/rules by default, or documents
+  `HWAI_MCP_AGENT_DOCS=skip` / `--agent-docs=skip`.

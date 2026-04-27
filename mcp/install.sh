@@ -13,6 +13,7 @@ REPO_URL="${HWAI_MCP_SOURCE_REPO:-}"
 DRY_RUN=0
 SKIP_BUILD=0
 UPDATE_SOURCE=0
+AGENT_DOCS="auto"
 
 usage() {
   cat <<'EOF'
@@ -27,6 +28,7 @@ Options:
   --update-source                      Run git pull --ff-only for a git-backed --source-root.
   --dry-run                            Show actions/config changes without writing.
   --skip-build                         Skip npm install/build; useful for config-only updates.
+  --agent-docs=auto|skip               Write local agent docs/rules into workspace. Default: auto.
   --no-update-source                   Compatibility no-op; bundled source is not updated by default.
 
 One-command example after public release:
@@ -47,6 +49,7 @@ for arg in "$@"; do
     --update-source) UPDATE_SOURCE=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
+    --agent-docs=*) AGENT_DOCS="${arg#*=}" ;;
     --no-update-source) UPDATE_SOURCE=0 ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown option: $arg" >&2; usage; exit 2 ;;
@@ -67,6 +70,11 @@ require_bin npm
 if [[ -z "$REPO_URL" ]]; then
   REPO_URL="$(node -e 'const fs=require("fs"); const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(m.source_repo || "");' "$MANIFEST")"
 fi
+
+case "$AGENT_DOCS" in
+  auto|skip) ;;
+  *) echo "Unknown agent-docs value: $AGENT_DOCS" >&2; usage; exit 2 ;;
+esac
 
 mkdir -p "$HOME/.hwai/mcp-stack"
 
@@ -105,6 +113,7 @@ CLI_ARGS=(
   --workspace="$WORKSPACE" \
   --profile="$PROFILE" \
   --clients="$CLIENTS"
+  --agent-docs="$AGENT_DOCS"
 )
 
 if [[ "$DRY_RUN" == "1" ]]; then

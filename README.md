@@ -48,6 +48,12 @@ Requirements: macOS/Linux shell, `git`, Node.js, and `npm`.
 After installation, restart Claude Code, Codex, Cursor, or Windsurf, or open a
 new chat so stdio MCP configs reload.
 
+The installer also writes local agent guidance into your project so Claude Code,
+Codex, Cursor, and Windsurf know when to use the downloaded MCPs from natural
+language. It updates only managed Humanswith.ai blocks/rules and creates
+`docs/humanswithai-mcp-stack.md`. To skip that step, set
+`HWAI_MCP_AGENT_DOCS=skip`.
+
 ## What You Get
 
 | Need | MCPs |
@@ -121,6 +127,7 @@ warnings: 0
 
 - [MCP bundle details](./mcp/README.md)
 - [Module docs](./mcp/docs/README.md)
+- [Agent autopilot docs](./mcp/docs/AGENT_AUTOPILOT.md)
 - [Public release audit](./PUBLIC_RELEASE_AUDIT.md)
 - [Security policy](./SECURITY.md)
 

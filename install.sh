@@ -11,6 +11,7 @@ BRANCH="${HWAI_MCP_BRANCH:-main}"
 SKIP_BUILD="${HWAI_MCP_SKIP_BUILD:-0}"
 DRY_RUN="${HWAI_MCP_DRY_RUN:-0}"
 NO_UPDATE="${HWAI_MCP_NO_UPDATE:-0}"
+AGENT_DOCS="${HWAI_MCP_AGENT_DOCS:-auto}"
 
 usage() {
   cat <<'EOF'
@@ -26,11 +27,13 @@ Options:
   --skip-build                                              Pass through to mcp/install.sh
   --dry-run                                                 Pass through to mcp/install.sh
   --no-update                                               Do not pull an existing clone
+  --agent-docs=auto|skip                                    Default: auto
   --help|-h
 
 Environment overrides:
   HWAI_MCP_PROFILE, HWAI_MCP_CLIENTS, HWAI_MCP_REPO_SLUG,
-  HWAI_MCP_REPO_URL, HWAI_MCP_REPO_DIR, HWAI_MCP_BRANCH
+  HWAI_MCP_REPO_URL, HWAI_MCP_REPO_DIR, HWAI_MCP_BRANCH,
+  HWAI_MCP_AGENT_DOCS
 EOF
 }
 
@@ -79,6 +82,7 @@ for arg in "$@"; do
     --skip-build) SKIP_BUILD=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --no-update) NO_UPDATE=1 ;;
+    --agent-docs=*) AGENT_DOCS="${arg#*=}" ;;
     --help|-h) usage; exit 0 ;;
     *) die "Unknown option: $arg" ;;
   esac
@@ -97,8 +101,13 @@ case "$CLIENTS" in
   *) die "Unknown clients value: $CLIENTS" ;;
 esac
 
+case "$AGENT_DOCS" in
+  auto|skip) ;;
+  *) die "Unknown agent-docs value: $AGENT_DOCS" ;;
+esac
+
 log "Humanswith.ai MCP public installer"
-printf 'profile=%s\nclients=%s\nworkspace=%s\nrepo_url=%s\nrepo_dir=%s\nbranch=%s\n' "$PROFILE" "$CLIENTS" "$WORKSPACE" "$REPO_URL" "$REPO_DIR" "$BRANCH"
+printf 'profile=%s\nclients=%s\nworkspace=%s\nrepo_url=%s\nrepo_dir=%s\nbranch=%s\nagent_docs=%s\n' "$PROFILE" "$CLIENTS" "$WORKSPACE" "$REPO_URL" "$REPO_DIR" "$BRANCH" "$AGENT_DOCS"
 
 log "Checking local prerequisites"
 require_bin git
@@ -138,6 +147,7 @@ INSTALL_ARGS=(
   "--profile=$PROFILE"
   "--clients=$CLIENTS"
   "--workspace=$WORKSPACE"
+  "--agent-docs=$AGENT_DOCS"
 )
 if [[ "$SKIP_BUILD" == "1" ]]; then
   INSTALL_ARGS+=(--skip-build)

@@ -113,6 +113,13 @@ if [[ -f mcp/install.sh ]]; then
   else
     fail "Install dry-run"
   fi
+  tmp_workspace="$(mktemp -d)"
+  if bash mcp/install.sh --profile=core --clients=auto --workspace="$tmp_workspace" --skip-build --dry-run; then
+    pass "Install dry-run with agent docs"
+  else
+    fail "Install dry-run with agent docs"
+  fi
+  rm -rf "$tmp_workspace"
 else
   pass "Install dry-run skipped; mcp/install.sh not present"
 fi
