@@ -6,14 +6,14 @@
  *
  * Tool: search(query, engines?, country?, count?, fields?, categories?)
  *
- * Env: HWAI_SCRAPER_KEY, HWAI_SCRAPER_URL (default http://127.0.0.1:8090)
+ * Env: HWAI_SCRAPER_KEY, HWAI_SCRAPER_URL (default http://localhost:8090)
  */
 import { randomUUID } from 'node:crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
-const BASE = process.env.HWAI_SCRAPER_URL || 'http://127.0.0.1:8090';
+const BASE = process.env.HWAI_SCRAPER_URL || 'http://localhost:8090';
 const KEY = process.env.HWAI_SCRAPER_KEY || '';
 const MCP_NAME = 'searxng-mcp';
 const MCP_VERSION = '1.1.0';

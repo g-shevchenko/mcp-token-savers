@@ -113,7 +113,7 @@ Each prep tool returns:
     }
   },
   "artifacts": {
-    "raw_log_url": "http://127.0.0.1:3394/artifacts/..."
+    "raw_log_url": "http://localhost:3394/artifacts/..."
   },
   "confidence": {
     "uncertainty": 0.02,
@@ -199,7 +199,7 @@ CONTEXT_PREP_TRANSPORT=http npm run start:http
 Health:
 
 ```bash
-curl http://127.0.0.1:3394/health
+curl http://localhost:3394/health
 ```
 
 MCP smoke:
@@ -214,8 +214,8 @@ npm run smoke:http
 HTTP benchmark, against a running local or remote service:
 
 ```bash
-CONTEXT_PREP_URL=http://127.0.0.1:3394 \
-CONTEXT_PREP_MCP_URL=http://127.0.0.1:3394/mcp \
+CONTEXT_PREP_URL=http://localhost:3394 \
+CONTEXT_PREP_MCP_URL=http://localhost:3394/mcp \
 npm run benchmark:http
 ```
 
@@ -229,7 +229,7 @@ npm run measurement:report -- --since=2026-04-24T00:00:00Z --out=/tmp/context-pr
 REST smoke:
 
 ```bash
-curl -fsS http://127.0.0.1:3394/api/prep/logs \
+curl -fsS http://localhost:3394/api/prep/logs \
   -H 'content-type: application/json' \
   -d '{"text":"$ npm run build\nsrc/app.ts:1:1 - error TS2304: Cannot find name foo."}'
 ```
@@ -242,7 +242,7 @@ HTTP mode behind your own service manager and reverse proxy.
 
 Optional scraper env:
 
-- `CONTEXT_PREP_SCRAPER_CORE_URL` — default `http://127.0.0.1:8090`
+- `CONTEXT_PREP_SCRAPER_CORE_URL` — default `http://localhost:8090`
 - `CONTEXT_PREP_SCRAPER_KEY` or `HWAI_SCRAPER_KEY` — bearer key for fallback/forced parser-stack mode
 - `CONTEXT_PREP_SCRAPER_MAX_TIER` — default `camoufox`
 - `CONTEXT_PREP_SCRAPER_FALLBACK=disabled` — disables automatic scraper-core fallback
@@ -259,7 +259,7 @@ For hosted HTTP mode, wire `GET /health` into your own monitor.
 
 - `prep_logs`: noisy TypeScript build failure with the first real error and impacted file preserved
 - `prep_text`: mixed RU/EN handoff with decisions, action items, open questions, and risks
-- `prep_url`: local HTML page served from `127.0.0.1` with local parser forced
+- `prep_url`: local HTML page served from `localhost` with local parser forced
 
 It fails when required evidence is missing, confidence is too low, or token savings falls below the per-mode gate.
 

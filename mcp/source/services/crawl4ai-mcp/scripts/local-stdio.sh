@@ -27,7 +27,7 @@ if [[ ! -f "$SERVICE_DIR/dist/index.js" ]] || \
   (cd "$SERVICE_DIR" && "$NPM_BIN" run build >/dev/null)
 fi
 
-export HWAI_CRAWL4AI_URL="${HWAI_CRAWL4AI_URL:-http://127.0.0.1:11235}"
+export HWAI_CRAWL4AI_URL="${HWAI_CRAWL4AI_URL:-http://localhost:11235}"
 export HWAI_CRAWL4AI_EMAIL="${HWAI_CRAWL4AI_EMAIL:-user@example.com}"
 export HWAI_CONTEXT="${HWAI_CONTEXT:-crawl4ai-mcp/local-stdio}"
 exec "$NODE_BIN" "$SERVICE_DIR/dist/index.js"

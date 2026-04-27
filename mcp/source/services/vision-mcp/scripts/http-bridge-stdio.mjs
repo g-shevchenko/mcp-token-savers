@@ -7,7 +7,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-const DEFAULT_REMOTE_BASE_URL = "http://127.0.0.1:3393";
+const DEFAULT_REMOTE_BASE_URL = "http://localhost:3393";
 
 function parsePositiveInt(rawValue, fallback) {
   const parsed = Number(rawValue);

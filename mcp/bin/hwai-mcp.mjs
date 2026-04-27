@@ -186,10 +186,10 @@ function ensureEnvFile(manifest, services, envFile, dryRun) {
   const required = [...new Set(services.flatMap((serviceId) => manifest.services[serviceId]?.required_env || []))];
   const optional = [...new Set(services.flatMap((serviceId) => manifest.services[serviceId]?.optional_env || []))];
   const lines = [
-    "# HWAI MCP Stack local env.",
+    "# Humanswith.ai MCP Stack local env.",
     "# Fill per-user secrets here. Do not commit this file.",
-    "HWAI_SCRAPER_URL=http://127.0.0.1:8090",
-    "HWAI_CRAWL4AI_URL=http://127.0.0.1:11235",
+    "HWAI_SCRAPER_URL=http://localhost:8090",
+    "HWAI_CRAWL4AI_URL=http://localhost:11235",
   ];
   for (const key of required) {
     if (!lines.some((line) => line.startsWith(`${key}=`))) {

@@ -80,7 +80,7 @@ export function getContextPrepConfig(): ContextPrepConfig {
     scraperCoreUrl:
       (process.env.CONTEXT_PREP_SCRAPER_CORE_URL ||
         process.env.HWAI_SCRAPER_URL ||
-        "http://127.0.0.1:8090").replace(/\/+$/, ""),
+        "http://localhost:8090").replace(/\/+$/, ""),
     scraperFallbackMode:
       process.env.CONTEXT_PREP_SCRAPER_FALLBACK === "disabled" ? "disabled" : "auto",
     scraperMaxTier: process.env.CONTEXT_PREP_SCRAPER_MAX_TIER || "camoufox",

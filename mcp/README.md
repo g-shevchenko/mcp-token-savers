@@ -26,9 +26,9 @@ The installer creates `~/.hwai/mcp-stack/env` when missing. Fill per-user
 endpoint URLs and bearer keys there if you use `external-context` or `full`:
 
 ```bash
-HWAI_SCRAPER_URL=http://127.0.0.1:8090
+HWAI_SCRAPER_URL=http://localhost:8090
 HWAI_SCRAPER_KEY=
-HWAI_CRAWL4AI_URL=http://127.0.0.1:11235
+HWAI_CRAWL4AI_URL=http://localhost:11235
 HWAI_CRAWL4AI_TOKEN=
 ```
 

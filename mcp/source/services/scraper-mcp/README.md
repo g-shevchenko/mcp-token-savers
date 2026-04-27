@@ -4,8 +4,8 @@ Three stdio MCP wrappers over a scraper/search/reader HTTP surface.
 
 The public-prep defaults point to local endpoints:
 
-- `HWAI_SCRAPER_URL=http://127.0.0.1:8090`
-- `HWAI_YT_TRANSCRIBE_URL=http://127.0.0.1:8091`
+- `HWAI_SCRAPER_URL=http://localhost:8090`
+- `HWAI_YT_TRANSCRIBE_URL=http://localhost:8091`
 
 Set your own URLs and bearer keys in `~/.hwai/mcp-stack/env` when using the
 `external-context` or `full` profile.
@@ -24,9 +24,9 @@ The bundle installer normally handles this for you.
 ## Env
 
 ```bash
-HWAI_SCRAPER_URL=http://127.0.0.1:8090
+HWAI_SCRAPER_URL=http://localhost:8090
 HWAI_SCRAPER_KEY=replace_me
-HWAI_YT_TRANSCRIBE_URL=http://127.0.0.1:8091
+HWAI_YT_TRANSCRIBE_URL=http://localhost:8091
 HWAI_YT_TRANSCRIBE_KEY=replace_me
 ```
 

@@ -27,6 +27,6 @@ if [[ ! -f "$SERVICE_DIR/dist/index.js" ]] || \
   (cd "$SERVICE_DIR" && "$NPM_BIN" run build >/dev/null)
 fi
 
-export HWAI_SCRAPER_URL="${HWAI_SCRAPER_URL:-http://127.0.0.1:8090}"
+export HWAI_SCRAPER_URL="${HWAI_SCRAPER_URL:-http://localhost:8090}"
 export HWAI_CONTEXT="${HWAI_CONTEXT:-reader-mcp/local-stdio}"
 exec "$NODE_BIN" "$SERVICE_DIR/dist/index.js"

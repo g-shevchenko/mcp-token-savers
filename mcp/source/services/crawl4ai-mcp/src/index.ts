@@ -7,7 +7,7 @@
  *   extract_structured(url, schema) — LLM-backed extraction against a Pydantic schema
  *   generate_llmstxt(url)         — crawl site + emit llms.txt
  *
- * Env: HWAI_CRAWL4AI_URL (default http://127.0.0.1:11235),
+ * Env: HWAI_CRAWL4AI_URL (default http://localhost:11235),
  *      HWAI_CRAWL4AI_TOKEN (api_token used to mint JWTs).
  *      HWAI_CRAWL4AI_EMAIL (email claim for JWT subject, default user@example.com).
  *
@@ -21,7 +21,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
-const BASE = process.env.HWAI_CRAWL4AI_URL || 'http://127.0.0.1:11235';
+const BASE = process.env.HWAI_CRAWL4AI_URL || 'http://localhost:11235';
 const API_TOKEN = process.env.HWAI_CRAWL4AI_TOKEN || '';
 const EMAIL = process.env.HWAI_CRAWL4AI_EMAIL || 'user@example.com';
 const MCP_NAME = 'crawl4ai-mcp';
