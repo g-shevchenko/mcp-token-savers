@@ -9,7 +9,7 @@ are optional and require your own service URLs and bearer keys.
 
 ## Modules
 
-This public-prep bundle contains 21 MCP modules:
+This bundle contains 21 MCP modules:
 
 - Router and trigger policy: `router-lite-mcp`
 - Repo context and retrieval: `retrieval-mcp`, `context-prep-mcp`
@@ -22,16 +22,21 @@ This public-prep bundle contains 21 MCP modules:
 
 ## One-command install
 
-After this repo is published, the intended public install command is:
+Safe local-first install:
 
 ```bash
 /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
 ```
 
-Useful options:
+Install all 21 modules in one command:
 
 ```bash
-HWAI_MCP_PROFILE=core /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
+HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
+```
+
+Limit client config writes if needed:
+
+```bash
 HWAI_MCP_PROFILE=full HWAI_MCP_CLIENTS=codex,cursor /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
 ```
 
@@ -50,8 +55,7 @@ reload.
 - External-context modules are disabled in practice until you provide your own
   endpoint URLs and bearer keys in `~/.hwai/mcp-stack/env`.
 
-## Public release status
+## Release status
 
-This folder is a sanitized public-prep snapshot, not yet the canonical public
-repo. Before publishing, choose the GitHub owner and license, then rerun the
-release audit in `PUBLIC_RELEASE_AUDIT.md`.
+This is a sanitized public snapshot of the HWAI MCP Stack. Before tagging a
+new release, rerun the release audit in `PUBLIC_RELEASE_AUDIT.md`.
