@@ -1,0 +1,94 @@
+[
+  {
+    "name": "screenshot-url-autopilot-docs",
+    "query": "where is screenshot URL autopilot documented",
+    "task_intent": "docs",
+    "include_globs": ["AGENTS.md", "CLAUDE.md", "claude/**", ".claude/**", ".cursor/**", ".windsurf/**"],
+    "expected_paths": [".cursor/rules/13-screenshot-url-autopilot.mdc", ".cursor/skills/screenshot-tasks.md"],
+    "expected_terms": ["screenshot"]
+  },
+  {
+    "name": "context-prep-request-log",
+    "query": "where is context prep request logging implemented",
+    "task_intent": "implementation",
+    "include_globs": ["services/context-prep-mcp/**"],
+    "expected_paths": ["services/context-prep-mcp/src/request-log.ts"],
+    "expected_symbols": ["appendRequestLog"],
+    "expected_terms": ["appendRequestLog"]
+  },
+  {
+    "name": "retrieval-agent-rules",
+    "query": "where are retrieval autopilot rules for Cursor and Claude",
+    "task_intent": "docs",
+    "include_globs": ["AGENTS.md", "CLAUDE.md", ".claude/**", ".cursor/**", ".windsurf/**", "claude/**"],
+    "expected_paths": [".claude/rules/retrieval-auto.md", ".cursor/rules/15-retrieval-autopilot.mdc", ".cursor/skills/retrieval.md"],
+    "expected_terms": ["retrieve_context", "find_files"]
+  },
+  {
+    "name": "context-prep-scraper-core-fallback",
+    "query": "where does context-prep call scraper-core fallback",
+    "task_intent": "implementation",
+    "include_globs": ["services/context-prep-mcp/**", ".claude/**", "claude/**"],
+    "expected_paths": ["services/context-prep-mcp/src/scraper-core-client.ts", "services/context-prep-mcp/src/prep-url.ts"],
+    "expected_terms": ["scraper", "fallback"]
+  },
+  {
+    "name": "retrieval-local-config-installer",
+    "query": "where is MCP config installer for retrieval",
+    "task_intent": "implementation",
+    "include_globs": ["services/retrieval-mcp/**"],
+    "expected_paths": ["services/retrieval-mcp/scripts/install-local-configs.mjs"],
+    "expected_symbols": ["installCodex"],
+    "expected_terms": ["installProjectJson"]
+  },
+  {
+    "name": "retrieval-retrieve-context-symbol",
+    "query": "where is retrieveContext implemented",
+    "task_intent": "implementation",
+    "include_globs": ["services/retrieval-mcp/**"],
+    "expected_paths": ["services/retrieval-mcp/src/retrieval.ts"],
+    "expected_symbols": ["retrieveContext"],
+    "expected_terms": ["retrieveContext"]
+  },
+  {
+    "name": "retrieval-path-policy-symbol",
+    "query": "where is buildPathPolicy implemented",
+    "task_intent": "implementation",
+    "include_globs": ["services/retrieval-mcp/**"],
+    "expected_paths": ["services/retrieval-mcp/src/path-policy.ts"],
+    "expected_symbols": ["buildPathPolicy"],
+    "expected_terms": ["buildPathPolicy"]
+  },
+  {
+    "name": "context-hints-selected-file",
+    "query": "where is local setup wrapper for agents",
+    "task_intent": "implementation",
+    "include_globs": ["services/retrieval-mcp/**"],
+    "context_hints": {
+      "selected_paths": ["services/retrieval-mcp/scripts/local-stdio.sh"]
+    },
+    "expected_paths": ["services/retrieval-mcp/scripts/local-stdio.sh"],
+    "expected_hint_kinds": ["selected_paths"],
+    "expected_terms": ["SERVICE_DIR"]
+  },
+  {
+    "name": "context-hints-diagnostic-file",
+    "query": "debug failed golden retrieval benchmark",
+    "task_intent": "test",
+    "include_globs": ["services/retrieval-mcp/**"],
+    "context_hints": {
+      "diagnostic_files": ["services/retrieval-mcp/scripts/benchmark-local.mjs"]
+    },
+    "expected_paths": ["services/retrieval-mcp/scripts/benchmark-local.mjs"],
+    "expected_hint_kinds": ["diagnostic_files"],
+    "expected_terms": ["failures"]
+  },
+  {
+    "name": "pantheon-heartbeat-provider",
+    "query": "where is Pantheon heartbeat API implemented",
+    "task_intent": "implementation",
+    "include_globs": ["services/pantheon-api/**"],
+    "expected_paths": ["services/pantheon-api/src/providers/heartbeats.js"],
+    "expected_terms": ["heartbeat"]
+  }
+]

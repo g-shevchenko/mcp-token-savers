@@ -1,0 +1,33 @@
+{
+  "name": "@hwai/agent-trace-mcp",
+  "version": "1.0.0",
+  "description": "Local-first agent trace MCP for compact session graphs and Pantheon-safe aggregate telemetry",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "benchmark:playwright": "npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/playwright-trace-mcp && npm --prefix ../playwright-trace-mcp run build && node ../../scripts/hwai-playwright-agent-trace-proof.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "agent-trace",
+    "observability",
+    "pantheon-safe",
+    "token-savings"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@hwai/vision-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for fetching and processing images from URLs",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:http": "node dist/index.js --http",
+    "dev": "tsc --watch",
+    "benchmark": "npm run benchmark:playwright --",
+    "benchmark:http": "python3 ./benchmarks/run_http_benchmark.py",
+    "benchmark:http:diff": "VISION_BENCHMARK_MANIFEST=./benchmarks/screenshot-diff-regression.json python3 ./benchmarks/run_http_benchmark.py",
+    "benchmark:playwright": "npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/playwright-trace-mcp && npm --prefix ../playwright-trace-mcp run build && node ../../scripts/hwai-playwright-vision-proof.mjs",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "smoke:http": "bash ./scripts/smoke-http.sh",
+    "smoke:bridge": "node ./scripts/smoke-bridge.mjs",
+    "smoke:bridge:persistent": "node ./scripts/smoke-bridge-persistent.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "node-fetch": "^3.3.2",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "vision",
+    "image",
+    "screenshot"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "retrieval-benchmark-traces.v1",
+  "reviewed_at": "2026-04-23",
+  "review_note": "Metadata-only feedback promoted from record_feedback traces after manual file inspection. Keep raw queries/code out unless explicitly safe.",
+  "cases": [
+    {
+      "name": "mcp-roadmap-planned-next-steps",
+      "source_feedback_ids": ["feedback-2026-04-23T155904896Z-c82a0e97"],
+      "query": "MCP roadmap planned list next steps purpose success criteria",
+      "task_intent": "docs",
+      "include_globs": ["notes/**"],
+      "expected_paths": [
+        "notes/context_prep_mcp_v1_plan_2026-04-23.md",
+        "notes/retrieval_mcp_v2_research_and_update_plan_2026-04-23.md",
+        "notes/vision_mcp_commercial_scan_and_prep_roadmap_2026-04-22.md"
+      ],
+      "expected_terms": ["MCP", "roadmap", "success criteria"]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@hwai/playwright-trace-mcp",
+  "version": "1.0.0",
+  "description": "Local-first Playwright trace MCP for compact browser-debug evidence before frontier reasoning",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "benchmark:real": "npm run build && node ./scripts/benchmark-local.mjs --with-real",
+    "benchmark:agent-trace": "npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/agent-trace-mcp && npm --prefix ../agent-trace-mcp run build && node ../../scripts/hwai-playwright-agent-trace-proof.mjs",
+    "benchmark:vision": "npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/vision-mcp && npm --prefix ../vision-mcp run build && node ../../scripts/hwai-playwright-vision-proof.mjs",
+    "fixtures:real": "node ./scripts/generate-real-fixtures.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "playwright": "^1.59.1",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "playwright",
+    "trace",
+    "browser-debug",
+    "token-savings"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

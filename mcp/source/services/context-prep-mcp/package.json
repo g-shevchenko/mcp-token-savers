@@ -1,0 +1,37 @@
+{
+  "name": "@hwai/context-prep-mcp",
+  "version": "1.0.0",
+  "description": "Parser-first MCP server for compacting logs, URLs, and long text before frontier model reasoning",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:http": "node dist/index.js --http",
+    "dev": "tsc --watch",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "benchmark:http": "python3 ./benchmarks/run_http_benchmark.py",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "smoke:http": "bash ./scripts/smoke-http.sh",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "cheerio": "^1.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "context",
+    "token-savings",
+    "logs",
+    "url-prep"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

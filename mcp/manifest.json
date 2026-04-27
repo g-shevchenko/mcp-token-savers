@@ -1,0 +1,232 @@
+{
+  "schema_version": "hwai-mcp-public-bundle.v1",
+  "bundle_name": "HWAI MCP Stack",
+  "default_profile": "core",
+  "distribution_repo": "https://github.com/g-shevchenko/hwai-mcp-stack.git",
+  "bundled_source_dir": "source",
+  "source_repo": "",
+  "source_branch": "main",
+  "workspace_env_file": "$HOME/.hwai/mcp-stack/env",
+  "data_policy": {
+    "local_raw_evidence": true,
+    "central_exports": "aggregate-only",
+    "forbidden_exports": [
+      "raw code",
+      "raw prompts",
+      "raw URLs",
+      "raw screenshots",
+      "raw trace artifacts",
+      "lockfiles",
+      "env files",
+      "Notion bodies"
+    ]
+  },
+  "profiles": {
+    "core": {
+      "description": "Small default profile for daily agent work: routing, repo retrieval, noisy context prep, and deterministic checks.",
+      "services": [
+        "router-lite-mcp",
+        "retrieval-mcp",
+        "context-prep-mcp",
+        "static-analysis-mcp",
+        "repo-history-mcp",
+        "repo-quality-gate-mcp"
+      ]
+    },
+    "repo": {
+      "description": "Repository hygiene and architecture support for large local repos.",
+      "extends": ["core"],
+      "services": [
+        "language-graph-mcp",
+        "repo-hygiene-mcp",
+        "docs-hygiene-mcp",
+        "contract-schema-mcp",
+        "dependency-risk-mcp",
+        "docs-sync-mcp",
+        "golden-dataset-mcp",
+        "agent-trace-mcp"
+      ]
+    },
+    "browser-debug": {
+      "description": "Browser debugging, screenshot prep, and local visual regression helpers.",
+      "extends": ["core"],
+      "services": [
+        "playwright-trace-mcp",
+        "vision-mcp",
+        "visual-baseline-mcp",
+        "agent-trace-mcp"
+      ]
+    },
+    "external-context": {
+      "description": "Optional external context gathering through user-supplied scraper, reader, SERP, and Crawl4AI surfaces.",
+      "services": [
+        "scraper-mcp",
+        "searxng-mcp",
+        "reader-mcp",
+        "crawl4ai-mcp"
+      ]
+    },
+    "full": {
+      "description": "Everything useful for a power user MacBook. Use after core passes doctor.",
+      "extends": ["repo", "browser-debug", "external-context"],
+      "services": []
+    }
+  },
+  "services": {
+    "router-lite-mcp": {
+      "client_name": "router_lite",
+      "service_dir": "services/router-lite-mcp",
+      "stdio": "services/router-lite-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/router-lite-mcp",
+      "category": "local-utility"
+    },
+    "retrieval-mcp": {
+      "client_name": "retrieval",
+      "service_dir": "services/retrieval-mcp",
+      "stdio": "services/retrieval-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/retrieval-mcp",
+      "category": "local-utility"
+    },
+    "context-prep-mcp": {
+      "client_name": "context_prep",
+      "service_dir": "services/context-prep-mcp",
+      "stdio": "services/context-prep-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/context-prep-mcp",
+      "category": "local-utility"
+    },
+    "static-analysis-mcp": {
+      "client_name": "static_analysis",
+      "service_dir": "services/static-analysis-mcp",
+      "stdio": "services/static-analysis-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/static-analysis-mcp",
+      "category": "local-utility"
+    },
+    "repo-history-mcp": {
+      "client_name": "repo_history",
+      "service_dir": "services/repo-history-mcp",
+      "stdio": "services/repo-history-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/repo-history-mcp",
+      "category": "local-utility"
+    },
+    "repo-quality-gate-mcp": {
+      "client_name": "repo_quality_gate",
+      "service_dir": "services/repo-quality-gate-mcp",
+      "stdio": "services/repo-quality-gate-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/repo-quality-gate-mcp",
+      "category": "local-utility"
+    },
+    "language-graph-mcp": {
+      "client_name": "language_graph",
+      "service_dir": "services/language-graph-mcp",
+      "stdio": "services/language-graph-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/language-graph-mcp",
+      "category": "local-utility"
+    },
+    "repo-hygiene-mcp": {
+      "client_name": "repo_hygiene",
+      "service_dir": "services/repo-hygiene-mcp",
+      "stdio": "services/repo-hygiene-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/repo-hygiene-mcp",
+      "category": "local-utility"
+    },
+    "docs-hygiene-mcp": {
+      "client_name": "docs_hygiene",
+      "service_dir": "services/docs-hygiene-mcp",
+      "stdio": "services/docs-hygiene-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/docs-hygiene-mcp",
+      "category": "local-utility"
+    },
+    "contract-schema-mcp": {
+      "client_name": "contract_schema",
+      "service_dir": "services/contract-schema-mcp",
+      "stdio": "services/contract-schema-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/contract-schema-mcp",
+      "category": "local-utility"
+    },
+    "dependency-risk-mcp": {
+      "client_name": "dependency_risk",
+      "service_dir": "services/dependency-risk-mcp",
+      "stdio": "services/dependency-risk-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/dependency-risk-mcp",
+      "category": "local-utility"
+    },
+    "docs-sync-mcp": {
+      "client_name": "docs_sync",
+      "service_dir": "services/docs-sync-mcp",
+      "stdio": "services/docs-sync-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/docs-sync-mcp",
+      "category": "local-utility"
+    },
+    "golden-dataset-mcp": {
+      "client_name": "golden_dataset",
+      "service_dir": "services/golden-dataset-mcp",
+      "stdio": "services/golden-dataset-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/golden-dataset-mcp",
+      "category": "local-utility"
+    },
+    "agent-trace-mcp": {
+      "client_name": "agent_trace",
+      "service_dir": "services/agent-trace-mcp",
+      "stdio": "services/agent-trace-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/agent-trace-mcp",
+      "category": "local-utility"
+    },
+    "playwright-trace-mcp": {
+      "client_name": "playwright_trace",
+      "service_dir": "services/playwright-trace-mcp",
+      "stdio": "services/playwright-trace-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/playwright-trace-mcp",
+      "category": "local-utility"
+    },
+    "vision-mcp": {
+      "client_name": "vision",
+      "service_dir": "services/vision-mcp",
+      "stdio": "services/vision-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/vision-mcp",
+      "category": "local-utility"
+    },
+    "visual-baseline-mcp": {
+      "client_name": "visual_baseline",
+      "service_dir": "services/visual-baseline-mcp",
+      "stdio": "services/visual-baseline-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/visual-baseline-mcp",
+      "category": "local-utility"
+    },
+    "scraper-mcp": {
+      "client_name": "scraper",
+      "service_dir": "services/scraper-mcp",
+      "stdio": "services/scraper-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/scraper-mcp",
+      "category": "external-context",
+      "required_env": ["HWAI_SCRAPER_KEY"],
+      "optional_env": ["HWAI_SCRAPER_URL", "HWAI_YT_TRANSCRIBE_KEY", "HWAI_YT_TRANSCRIBE_URL"]
+    },
+    "searxng-mcp": {
+      "client_name": "searxng",
+      "service_dir": "services/searxng-mcp",
+      "stdio": "services/searxng-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/searxng-mcp",
+      "category": "external-context",
+      "required_env": ["HWAI_SCRAPER_KEY"],
+      "optional_env": ["HWAI_SCRAPER_URL"]
+    },
+    "reader-mcp": {
+      "client_name": "reader",
+      "service_dir": "services/reader-mcp",
+      "stdio": "services/reader-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/reader-mcp",
+      "category": "external-context",
+      "required_env": ["HWAI_SCRAPER_KEY"],
+      "optional_env": ["HWAI_SCRAPER_URL"]
+    },
+    "crawl4ai-mcp": {
+      "client_name": "crawl4ai",
+      "service_dir": "services/crawl4ai-mcp",
+      "stdio": "services/crawl4ai-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/crawl4ai-mcp",
+      "category": "external-context",
+      "required_env": ["HWAI_CRAWL4AI_TOKEN"],
+      "optional_env": ["HWAI_CRAWL4AI_URL", "HWAI_CRAWL4AI_EMAIL"]
+    }
+  }
+}

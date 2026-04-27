@@ -1,0 +1,36 @@
+{
+  "name": "@hwai/retrieval-mcp",
+  "version": "1.0.0",
+  "description": "Local-first deterministic codebase retrieval MCP for token-efficient agent context",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:http": "node dist/index.js --http",
+    "dev": "tsc --watch",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "trace:candidates": "npm run build && node ./scripts/trace-to-benchmark.mjs",
+    "e2e": "bash ./scripts/e2e-local.sh",
+    "install:local-configs": "node ./scripts/install-local-configs.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "retrieval",
+    "codebase",
+    "token-savings",
+    "ripgrep"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@hwai/reader-mcp",
+  "version": "1.1.0",
+  "description": "Stdio MCP wrapper for HTML\u2192markdown via scraper-core /extract (trafilatura \u2192 LiteLLM Cerebras \u2192 Gemini \u2192 Ollama).",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

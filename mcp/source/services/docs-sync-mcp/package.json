@@ -1,0 +1,33 @@
+{
+  "name": "@hwai/docs-sync-mcp",
+  "version": "0.1.1",
+  "description": "Local-first docs sync MCP for repo SSOT versus Notion mirror manifests, stale mirrors, title drift, action extraction, and update candidates",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "docs",
+    "notion",
+    "ssot",
+    "mirror",
+    "pantheon-safe"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

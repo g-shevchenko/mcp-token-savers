@@ -1,0 +1,32 @@
+{
+  "name": "@hwai/golden-dataset-mcp",
+  "version": "0.1.1",
+  "description": "Local-first golden dataset MCP for benchmark cases, safe run comparisons, and Pantheon-safe aggregate telemetry",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "benchmark",
+    "golden-dataset",
+    "pantheon-safe",
+    "token-savings"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}

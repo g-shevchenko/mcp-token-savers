@@ -1,0 +1,31 @@
+{
+  "name": "@hwai/router-lite-mcp",
+  "version": "0.1.0",
+  "description": "Local-first deterministic MCP trigger/skip policy router for HWAI utility prep tools",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "router",
+    "trigger-policy",
+    "token-savings"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}
