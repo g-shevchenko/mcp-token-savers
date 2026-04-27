@@ -42,7 +42,7 @@ jobs:
           } > RELEASE_PROOF.md
           sha256sum "$archive" sbom.cdx.json RELEASE_PROOF.md > SHA256SUMS
       - name: Attest archive
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32
         with:
           subject-path: |
             hwai-mcp-stack-${{ github.ref_name }}.tar.gz
