@@ -11,6 +11,12 @@ on:
 # write perms (https://github.com/ossf/scorecard-action#workflow-restrictions).
 permissions: read-all
 
+# Opt JavaScript-based actions into Node 24 runtime ahead of the 2026-06-02
+# forced switch. All actions used here are Node-24-compatible (checkout v6,
+# setup-node v6, upload-artifact v6, scorecard-action v2.4.3, codeql v3).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   scorecard:
     name: Scorecard
