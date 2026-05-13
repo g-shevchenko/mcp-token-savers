@@ -1,0 +1,15 @@
+# CODEOWNERS — auto-request review on PRs touching matching paths.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Catch-all: every PR auto-requests review from the maintainer.
+*                       @g-shevchenko
+
+# Security-sensitive files: require explicit ownership signal.
+/.github/workflows/     @g-shevchenko
+/.github/dependabot.yml @g-shevchenko
+/SECURITY.md            @g-shevchenko
+/TRUST.md               @g-shevchenko
+/VERIFY_BEFORE_INSTALL.md @g-shevchenko
+/install.sh             @g-shevchenko
+/mcp/install.sh         @g-shevchenko
+/scripts/               @g-shevchenko
