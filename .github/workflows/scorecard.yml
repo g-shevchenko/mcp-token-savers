@@ -7,8 +7,16 @@ on:
   push:
     branches: ["main"]
 
-# Top-level perms must be read-only AND no global env. Scorecard publisher
-# rejects both global write perms and global env vars/defaults.
+# Scorecard publisher workflow restrictions:
+#   - Top-level permissions must be read-only.
+#   - No env vars / defaults at workflow level OR job level on the
+#     scorecard job (any env triggers "scorecard job contains env vars").
+# Therefore this workflow cannot opt into FORCE_JAVASCRIPT_ACTIONS_TO_NODE24.
+# All JS actions here are already on Node-24-compatible majors
+# (actions/checkout@v6); ossf/scorecard-action is a Docker image so the
+# Node deprecation does not apply to it. github/codeql-action/upload-sarif
+# may still surface a Node 20 cosmetic annotation until its v3 release with
+# Node 24 lands (Dependabot will sweep it up).
 # https://github.com/ossf/scorecard-action#workflow-restrictions
 permissions: read-all
 
@@ -21,10 +29,6 @@ jobs:
       id-token: write
       contents: read
       actions: read
-    # FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 must live at job level here
-    # (not workflow level) per Scorecard publisher restrictions.
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
