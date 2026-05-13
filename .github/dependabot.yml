@@ -1,31 +1,34 @@
+# Dependabot configuration.
+#
+# Uses `directories:` (plural) with glob to cover ALL bundled MCP services
+# under mcp/source/services/* automatically — no per-service entry needed
+# when a new MCP is added. Groups consolidate weekly bumps into one PR
+# per ecosystem instead of one PR per package per directory.
+#
+# Docs:
+#   https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/mcp/source/services/router-lite-mcp"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/mcp/source/services/retrieval-mcp"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/mcp/source/services/context-prep-mcp"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/mcp/source/services/static-analysis-mcp"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/mcp/source/services/repo-history-mcp"
-    schedule:
-      interval: "weekly"
-  - package-ecosystem: "npm"
-    directory: "/mcp/source/services/repo-quality-gate-mcp"
-    schedule:
-      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
+  - package-ecosystem: "npm"
+    directories:
+      - "/mcp/source/services/*"
+    schedule:
+      interval: "weekly"
+    groups:
+      mcp-services-prod:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      mcp-services-dev:
+        dependency-type: "development"
