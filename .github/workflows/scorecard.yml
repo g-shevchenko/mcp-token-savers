@@ -7,15 +7,19 @@ on:
   push:
     branches: ["main"]
 
-permissions:
-  contents: read
-  security-events: write
-  id-token: write
+# Top-level perms must be read-only. Scorecard publisher rejects global
+# write perms (https://github.com/ossf/scorecard-action#workflow-restrictions).
+permissions: read-all
 
 jobs:
   scorecard:
     name: Scorecard
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -31,4 +35,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225
         with:
           sarif_file: scorecard.sarif
-
