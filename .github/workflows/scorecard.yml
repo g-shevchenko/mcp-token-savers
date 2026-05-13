@@ -7,15 +7,10 @@ on:
   push:
     branches: ["main"]
 
-# Top-level perms must be read-only. Scorecard publisher rejects global
-# write perms (https://github.com/ossf/scorecard-action#workflow-restrictions).
+# Top-level perms must be read-only AND no global env. Scorecard publisher
+# rejects both global write perms and global env vars/defaults.
+# https://github.com/ossf/scorecard-action#workflow-restrictions
 permissions: read-all
-
-# Opt JavaScript-based actions into Node 24 runtime ahead of the 2026-06-02
-# forced switch. All actions used here are Node-24-compatible (checkout v6,
-# setup-node v6, upload-artifact v6, scorecard-action v2.4.3, codeql v3).
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   scorecard:
@@ -26,6 +21,10 @@ jobs:
       id-token: write
       contents: read
       actions: read
+    # FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 must live at job level here
+    # (not workflow level) per Scorecard publisher restrictions.
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
