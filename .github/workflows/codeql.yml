@@ -12,6 +12,11 @@ permissions:
   contents: read
   security-events: write
 
+# Opt JavaScript-based actions into Node 24 runtime ahead of the 2026-06-02
+# forced switch. All actions used here are Node-24-compatible.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   analyze:
     name: CodeQL JavaScript/TypeScript
