@@ -1,7 +1,12 @@
 # MCP Bundle
 
 This directory contains the installer, manifest, docs, and bundled source for
-the 21-module Humanswith.ai MCP Stack.
+the 17-module local Humanswith.ai MCP Stack.
+
+Product framing: this bundle is the local module layer for **HWAI Context
+Router**, the technical core of a **Token Efficiency Platform for Agentic IDEs**.
+The bundle should feel like one router-led workflow, not a menu of unrelated
+servers.
 
 Use the repository-level `install.sh` for one-command public installs. Use this
 directory directly only when you already have a local clone:
@@ -26,26 +31,18 @@ local agent instructions:
 
 | Profile | Purpose |
 | --- | --- |
-| `core` | Router, retrieval, context prep, static analysis, repo history, quality gate. |
+| `core` | HWAI Context Router, retrieval, context prep, static analysis, repo history, quality gate. |
 | `repo` | Core plus language graph, repo/docs hygiene, contracts, dependency risk, docs sync, golden datasets, agent trace. |
 | `browser-debug` | Core plus Playwright trace, Vision prep, Visual Baseline, agent trace. |
-| `external-context` | Scraper, SERP, reader, and Crawl4AI wrappers over user-supplied endpoints. |
-| `full` | All profiles. Use after `core` passes. |
+| `full` | All local profiles. Use after `core` passes. |
 
-## Optional External Context
+## Local-Only Public Stack
 
-The installer creates `~/.hwai/mcp-stack/env` when missing. Fill per-user
-endpoint URLs and bearer keys there if you use `external-context` or `full`:
+The public `full` profile is local-only. It does not install scraper, SERP,
+reader, or Crawl4AI wrappers, and it does not require API keys.
 
-```bash
-HWAI_SCRAPER_URL=http://localhost:8090
-HWAI_SCRAPER_KEY=
-HWAI_CRAWL4AI_URL=http://localhost:11235
-HWAI_CRAWL4AI_TOKEN=
-```
-
-Never commit that file. Generated MCP configs only point wrappers at the local
-env file.
+Generated MCP configs still point at local stdio wrappers and keep raw repo
+evidence on the user's machine.
 
 ## Doctor
 
@@ -64,3 +61,12 @@ traces, env files, credentials, Notion bodies, or raw code bodies.
 
 See [Agent Autopilot Docs](./docs/AGENT_AUTOPILOT.md) for the natural-language
 trigger vocabulary that the installer places into local project docs/rules.
+
+The intended autopilot path is:
+
+1. classify whether prep/evidence tools are useful;
+2. call the smallest relevant MCP;
+3. return compact evidence and a prompt scaffold;
+4. keep frontier reasoning responsible for final judgment;
+5. keep raw private evidence out of the frontier prompt unless the user and task
+   actually require exact source inspection.

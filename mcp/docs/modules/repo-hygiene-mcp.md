@@ -39,16 +39,13 @@ Do not auto-delete; require exact file reads and tests.
 - `scan_complexity_hotspots`
 - `propose_cleanup_plan`
 - `get_artifact`
-- `get_measurement_report`
 
 ## Scripts
 
 - `npm run build` - `tsc`
 - `npm run start` - `node dist/index.js`
 - `npm run dev` - `tsc --watch`
-- `npm run benchmark` - `npm run build && node ./scripts/benchmark-local.mjs`
 - `npm run smoke` - `bash ./scripts/smoke-local.sh`
-- `npm run measurement:report` - `npm run build && node ./scripts/measurement-report.mjs`
 - `npm run prepare` - `npm run build`
 
 ## Keys and environment
@@ -57,7 +54,7 @@ No API keys are required for normal local use.
 
 ## Data policy
 
-The module must keep raw local evidence local. Measurement exports should be aggregate-only: call counts, latency, token estimates, result counts, and safe status fields. No raw code, prompts, URLs, screenshots, traces, lockfile bodies, env values, or Notion bodies should be exported centrally.
+The module must keep raw local evidence local. Aggregate exports should be metadata-only: call counts, latency, token estimates, result counts, and safe status fields. No raw code, prompts, URLs, screenshots, traces, lockfile bodies, env values, or Notion bodies should be exported centrally.
 
 ## Proof commands
 
@@ -65,5 +62,4 @@ The module must keep raw local evidence local. Measurement exports should be agg
 cd ~/.hwai/hwai-mcp-stack/mcp/source/services/repo-hygiene-mcp
 npm run build
 npm run smoke
-npm run measurement:report
 ```

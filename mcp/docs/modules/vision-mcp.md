@@ -47,11 +47,6 @@ Respect allowed-host policy; expand profiles only when needed.
 - `npm run start` - `node dist/index.js`
 - `npm run start:http` - `node dist/index.js --http`
 - `npm run dev` - `tsc --watch`
-- `npm run benchmark` - `npm run benchmark:playwright --`
-- `npm run benchmark:http` - `python3 ./benchmarks/run_http_benchmark.py`
-- `npm run benchmark:http:diff` - `VISION_BENCHMARK_MANIFEST=./benchmarks/screenshot-diff-regression.json python3 ./benchmarks/run_http_benchmark.py`
-- `npm run benchmark:playwright` - `npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/playwright-trace-mcp && npm --prefix ../playwright-trace-mcp run build && node ../../scripts/hwai-playwright-vision-proof.mjs`
-- `npm run measurement:report` - `npm run build && node ./scripts/measurement-report.mjs`
 - `npm run smoke` - `bash ./scripts/smoke-local.sh`
 - `npm run smoke:http` - `bash ./scripts/smoke-http.sh`
 - `npm run smoke:bridge` - `node ./scripts/smoke-bridge.mjs`
@@ -64,7 +59,7 @@ No API keys are required for normal local use.
 
 ## Data policy
 
-The module must keep raw local evidence local. Measurement exports should be aggregate-only: call counts, latency, token estimates, result counts, and safe status fields. No raw code, prompts, URLs, screenshots, traces, lockfile bodies, env values, or Notion bodies should be exported centrally.
+The module must keep raw local evidence local. Aggregate exports should be metadata-only: call counts, latency, token estimates, result counts, and safe status fields. No raw code, prompts, URLs, screenshots, traces, lockfile bodies, env values, or Notion bodies should be exported centrally.
 
 ## Proof commands
 
@@ -72,5 +67,4 @@ The module must keep raw local evidence local. Measurement exports should be agg
 cd ~/.hwai/hwai-mcp-stack/mcp/source/services/vision-mcp
 npm run build
 npm run smoke
-npm run measurement:report
 ```

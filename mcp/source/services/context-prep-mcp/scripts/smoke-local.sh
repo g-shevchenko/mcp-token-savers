@@ -31,7 +31,7 @@ console.log(JSON.stringify({
     arguments: {
       text: logText,
       context: "local stdio smoke",
-      metadata: { source: "smoke-local" }
+      metadata: { source: "smoke-local", traffic_class: "smoke" }
     }
   }
 }));
@@ -44,7 +44,26 @@ console.log(JSON.stringify({
     arguments: {
       text: "Decision: keep context-prep local-first. Action: add stdio smoke coverage. Risk: do not leak raw text into request logs.",
       purpose: "local smoke",
-      metadata: { source: "smoke-local" }
+      metadata: { source: "smoke-local", traffic_class: "smoke" }
+    }
+  }
+}));
+console.log(JSON.stringify({
+  jsonrpc: "2.0",
+  id: 5,
+  method: "tools/call",
+  params: {
+    name: "compress_context",
+    arguments: {
+      text: [
+        "Noise: repeated background line.",
+        "Decision: keep the non-inferiority quality gate with Recall@10 and false positives.",
+        "Noise: another repeated background line.",
+        "Risk: exact wording can require raw artifact fallback."
+      ].join("\n\n"),
+      query: "quality gate Recall@10 false positives",
+      target_ratio: 0.45,
+      metadata: { source: "smoke-local", traffic_class: "smoke" }
     }
   }
 }));
@@ -56,15 +75,19 @@ NODE
 grep -q '"name":"prep_logs"' "$OUT_FILE"
 grep -q '"name":"prep_text"' "$OUT_FILE"
 grep -q '"name":"prep_url"' "$OUT_FILE"
+grep -q '"name":"compress_context"' "$OUT_FILE"
 grep -q '"name":"get_artifact"' "$OUT_FILE"
 grep -q 'context-prep.v1' "$OUT_FILE"
 grep -q 'logs-prep' "$OUT_FILE"
 grep -q 'text-prep' "$OUT_FILE"
+grep -q 'context-compression' "$OUT_FILE"
 
-if rg -q 'leakySymbol|keep context-prep local-first' "$CACHE_DIR/requests.jsonl"; then
+if rg -q 'leakySymbol|keep context-prep local-first|non-inferiority quality gate' "$CACHE_DIR/requests.jsonl"; then
   echo "context-prep-mcp smoke leaked raw input into request log" >&2
   exit 1
 fi
+
+grep -q '"traffic_class":"smoke"' "$CACHE_DIR/requests.jsonl"
 
 {
   printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"context-prep-smoke-reduced-path","version":"1.0"}}}'

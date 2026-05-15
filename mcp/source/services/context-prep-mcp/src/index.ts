@@ -15,6 +15,7 @@ import { readArtifact } from "./artifact-store.js";
 import { prepLogs } from "./prep-logs.js";
 import { prepText } from "./prep-text.js";
 import { prepUrl } from "./prep-url.js";
+import { compressContext } from "./compress-context.js";
 import { appendRequestLog } from "./request-log.js";
 import { clampText } from "./text-utils.js";
 
@@ -33,6 +34,12 @@ const METADATA_SCHEMA = {
     commit_sha: { type: "string" },
     session_id: { type: "string" },
     source: { type: "string" },
+    traffic_class: {
+      type: "string",
+      enum: ["production_like", "proof_loop", "benchmark", "smoke", "e2e", "unknown"],
+      description:
+        "Optional traffic attribution for measurement reports. Use production_like for real workflows and proof_loop/benchmark/smoke/e2e for eval traffic.",
+    },
   },
 };
 
@@ -148,6 +155,39 @@ const PREP_TEXT_TOOL: Tool = {
   },
 };
 
+const COMPRESS_CONTEXT_TOOL: Tool = {
+  name: "compress_context",
+  description:
+    "Query-aware or general deterministic context compression. Local-first, extractive, and API-free. " +
+    "Use for long retrieved documents, tool outputs, or reusable context when prep_text is too summary-oriented and answer-critical evidence must be retained. " +
+    "If exact wording matters or confidence is high-risk, fetch the raw artifact.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      text: {
+        type: "string",
+        description: "Raw long context to compress.",
+      },
+      query: {
+        type: "string",
+        description: "Optional query or task intent. Strongly recommended in query mode.",
+      },
+      mode: {
+        type: "string",
+        enum: ["query", "general"],
+        default: "query",
+        description: "query = keep query-relevant evidence; general = preserve broadly important chunks.",
+      },
+      target_ratio: {
+        type: "number",
+        description: "Target kept-token ratio, clamped to 0.1-0.9. Default: 0.35.",
+      },
+      metadata: METADATA_SCHEMA,
+    },
+    required: ["text"],
+  },
+};
+
 const GET_ARTIFACT_TOOL: Tool = {
   name: "get_artifact",
   description:
@@ -218,6 +258,26 @@ function metadataSource(args: Record<string, unknown>): string | undefined {
   return typeof source === "string" && source.trim() ? source.trim().slice(0, 80) : undefined;
 }
 
+function metadataSurface(args: Record<string, unknown>): string | undefined {
+  const metadata = args.metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  const surface = (metadata as Record<string, unknown>).surface;
+  return typeof surface === "string" && surface.trim() ? surface.trim().slice(0, 80) : undefined;
+}
+
+function metadataTrafficClass(args: Record<string, unknown>): string | undefined {
+  const metadata = args.metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  const trafficClass = (metadata as Record<string, unknown>).traffic_class;
+  return typeof trafficClass === "string" && trafficClass.trim() ? trafficClass.trim().slice(0, 80) : undefined;
+}
+
 function summarizeInput(tool: string, args: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!args) {
     return {};
@@ -231,17 +291,24 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
       allow_paid_tiers: Boolean(args.allow_paid_tiers),
       purpose: typeof args.purpose === "string" ? clampText(args.purpose, 160) : undefined,
       metadata_source: metadataSource(args),
+      metadata_surface: metadataSurface(args),
+      traffic_class: metadataTrafficClass(args),
     };
   }
 
-  if (tool === "prep_logs" || tool === "prep_text") {
+  if (tool === "prep_logs" || tool === "prep_text" || tool === "compress_context") {
     return {
       text_chars: typeof args.text === "string" ? args.text.length : 0,
       max_compact_chars: args.max_compact_chars,
       purpose: typeof args.purpose === "string" ? clampText(args.purpose, 160) : undefined,
       context: typeof args.context === "string" ? clampText(args.context, 160) : undefined,
+      query: typeof args.query === "string" ? clampText(args.query, 160) : undefined,
+      mode: args.mode,
+      target_ratio: args.target_ratio,
       preserve_exact: Boolean(args.preserve_exact),
       metadata_source: metadataSource(args),
+      metadata_surface: metadataSurface(args),
+      traffic_class: metadataTrafficClass(args),
     };
   }
 
@@ -274,6 +341,11 @@ function summarizeOutput(result: unknown): Record<string, unknown> {
     parser_used: record.parser_stack?.used,
     scraper_fallback_reason: record.parser_stack?.fallback_reason,
     scraper_engine: record.parser_stack?.scraper_core?.engine,
+    compression_mode: record.compression?.mode,
+    compression_method: record.compression?.method,
+    compression_target_ratio: record.compression?.target_ratio,
+    units_total: record.compression?.units_total,
+    units_kept: record.compression?.units_kept,
   };
 }
 
@@ -326,7 +398,7 @@ function createContextPrepServer(): Server {
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
-      tools: [PREP_LOGS_TOOL, PREP_URL_TOOL, PREP_TEXT_TOOL, GET_ARTIFACT_TOOL],
+      tools: [PREP_LOGS_TOOL, PREP_URL_TOOL, PREP_TEXT_TOOL, COMPRESS_CONTEXT_TOOL, GET_ARTIFACT_TOOL],
     };
   });
 
@@ -399,6 +471,28 @@ function createContextPrepServer(): Server {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         return toolError(`Error preparing text: ${errorMessage}`);
+      }
+    }
+
+    if (name === "compress_context") {
+      const text = asText(args?.text);
+      if (!text) {
+        return toolError("Error: text is required");
+      }
+
+      try {
+        const result = await audited("compress_context", "mcp", args as Record<string, unknown> | undefined, async () =>
+          compressContext(text, config, {
+            query: asText(args?.query),
+            mode: args?.mode === "general" ? "general" : "query",
+            target_ratio: args?.target_ratio as number | undefined,
+            metadata: args?.metadata,
+          }),
+        );
+        return { content: [{ type: "text" as const, text: stringifyResult(result) }] };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return toolError(`Error compressing context: ${errorMessage}`);
       }
     }
 
@@ -569,6 +663,22 @@ async function handleRestPrep(pathname: string, req: IncomingMessage, res: Serve
     return;
   }
 
+  if (pathname === "/api/prep/compress") {
+    respondJson(
+      res,
+      200,
+      await audited("compress_context", "rest", body, async () =>
+        compressContext(asText(body.text), config, {
+          query: asText(body.query),
+          mode: body.mode === "general" ? "general" : "query",
+          target_ratio: body.target_ratio as number | undefined,
+          metadata: body.metadata,
+        }),
+      ),
+    );
+    return;
+  }
+
   respondJson(res, 404, { error: "Unknown prep endpoint" });
 }
 
@@ -586,7 +696,7 @@ async function startHttpServer(): Promise<void> {
           request_log_path: config.requestLogPath,
           public_base_url: config.publicBaseUrl,
           transport_mode: "http",
-          prep_modes: ["logs-prep", "url-prep", "text-prep"],
+          prep_modes: ["logs-prep", "url-prep", "text-prep", "context-compression"],
           pipeline_version: CONTEXT_PREP_PIPELINE_VERSION,
           max_body_bytes: config.maxBodyBytes,
           max_input_chars: config.maxInputChars,

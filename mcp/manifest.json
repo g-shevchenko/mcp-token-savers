@@ -57,18 +57,9 @@
         "agent-trace-mcp"
       ]
     },
-    "external-context": {
-      "description": "Optional external context gathering through user-supplied scraper, reader, SERP, and Crawl4AI surfaces.",
-      "services": [
-        "scraper-mcp",
-        "searxng-mcp",
-        "reader-mcp",
-        "crawl4ai-mcp"
-      ]
-    },
     "full": {
-      "description": "Everything useful for a power user MacBook. Use after core passes doctor.",
-      "extends": ["repo", "browser-debug", "external-context"],
+      "description": "All local token-efficiency MCPs. Use after core passes doctor.",
+      "extends": ["repo", "browser-debug"],
       "services": []
     }
   },
@@ -191,42 +182,6 @@
       "stdio": "services/visual-baseline-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/visual-baseline-mcp",
       "category": "local-utility"
-    },
-    "scraper-mcp": {
-      "client_name": "scraper",
-      "service_dir": "services/scraper-mcp",
-      "stdio": "services/scraper-mcp/scripts/local-stdio.sh",
-      "cache_dir": "$HOME/.hwai/scraper-mcp",
-      "category": "external-context",
-      "required_env": ["HWAI_SCRAPER_KEY"],
-      "optional_env": ["HWAI_SCRAPER_URL", "HWAI_YT_TRANSCRIBE_KEY", "HWAI_YT_TRANSCRIBE_URL"]
-    },
-    "searxng-mcp": {
-      "client_name": "searxng",
-      "service_dir": "services/searxng-mcp",
-      "stdio": "services/searxng-mcp/scripts/local-stdio.sh",
-      "cache_dir": "$HOME/.hwai/searxng-mcp",
-      "category": "external-context",
-      "required_env": ["HWAI_SCRAPER_KEY"],
-      "optional_env": ["HWAI_SCRAPER_URL"]
-    },
-    "reader-mcp": {
-      "client_name": "reader",
-      "service_dir": "services/reader-mcp",
-      "stdio": "services/reader-mcp/scripts/local-stdio.sh",
-      "cache_dir": "$HOME/.hwai/reader-mcp",
-      "category": "external-context",
-      "required_env": ["HWAI_SCRAPER_KEY"],
-      "optional_env": ["HWAI_SCRAPER_URL"]
-    },
-    "crawl4ai-mcp": {
-      "client_name": "crawl4ai",
-      "service_dir": "services/crawl4ai-mcp",
-      "stdio": "services/crawl4ai-mcp/scripts/local-stdio.sh",
-      "cache_dir": "$HOME/.hwai/crawl4ai-mcp",
-      "category": "external-context",
-      "required_env": ["HWAI_CRAWL4AI_TOKEN"],
-      "optional_env": ["HWAI_CRAWL4AI_URL", "HWAI_CRAWL4AI_EMAIL"]
     }
   }
 }

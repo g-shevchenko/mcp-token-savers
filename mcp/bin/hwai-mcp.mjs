@@ -149,12 +149,20 @@ function tomlEnv(env) {
 }
 
 function stripCodexBlocks(existing, names) {
-  let text = existing;
-  for (const name of names) {
-    const pattern = new RegExp(`\\n?\\[mcp_servers\\.${name}\\][\\s\\S]*?(?=\\n\\[|\\s*$)`, "m");
-    text = text.replace(pattern, "\n");
+  const targets = new Set(names);
+  const lines = existing.split(/\r?\n/);
+  const kept = [];
+  let skipping = false;
+  for (const line of lines) {
+    const header = line.match(/^\[([^\]]+)\]\s*$/);
+    if (header) {
+      const table = header[1];
+      const mcpMatch = table.match(/^mcp_servers\.([^.]+)(?:\.|$)/);
+      skipping = Boolean(mcpMatch && targets.has(mcpMatch[1]));
+    }
+    if (!skipping) kept.push(line);
   }
-  return text.trimEnd();
+  return kept.join("\n").trimEnd();
 }
 
 function installCodex(items, dryRun) {
@@ -206,24 +214,27 @@ function naturalTriggerTable() {
     "| --- | --- |",
     "| \"where is this implemented\", \"найди где живет\", \"что менять\", \"before editing find context\" | `retrieval-mcp`, `language-graph-mcp`, `repo-history-mcp` |",
     "| \"huge log\", \"CI output\", \"stack trace\", \"summarize this long spec\", \"длинные логи\" | `context-prep-mcp` |",
+    "| \"compress this context\", \"сожми контекст\", \"preserve evidence\", \"too much tool output\" | `context-prep-mcp` via context compression |",
     "| \"is this safe to merge\", \"quality gate\", \"static check\", \"перед PR проверь\" | `static-analysis-mcp`, `repo-quality-gate-mcp` |",
     "| \"repo is growing\", \"find stale docs\", \"cleanup docs\", \"мусор в репо\" | `repo-hygiene-mcp`, `docs-hygiene-mcp`, `docs-sync-mcp` |",
+    "| \"release blocker\", \"missing LICENSE\", \"generated dist committed\", \"public repo hygiene\" | `repo-hygiene-mcp`, `repo-quality-gate-mcp` |",
     "| \"API/schema changed\", \"contract drift\", \"dependency risk\", \"lockfile risk\" | `contract-schema-mcp`, `dependency-risk-mcp` |",
     "| \"Playwright trace\", \"trace.zip\", \"HAR\", \"why did this browser test fail\" | `playwright-trace-mcp`, `agent-trace-mcp` |",
     "| \"screenshot\", \"visual diff\", \"compare UI\", \"скриншот\", \"визуально проверь\" | `vision-mcp`, `visual-baseline-mcp` |",
-    "| \"search web\", \"read this URL\", \"crawl\", \"SERP\", \"extract from page\" | optional `scraper-mcp`, `searxng-mcp`, `reader-mcp`, `crawl4ai-mcp` when endpoints/keys are configured |",
   ].join("\n");
 }
 
 function agentAutopilotBlock({ profile, clients, services }) {
   return [
-    "## Humanswith.ai MCP Autopilot",
+    "## HWAI Context Router Autopilot",
     "",
+    "Product: Token Efficiency Platform for Agentic IDEs.",
+    "Technical core: HWAI Context Router.",
     `Installed MCP profile: \`${profile}\`.`,
     `Configured clients: ${clientListLabel(clients)}.`,
     `Available MCP services: ${serviceListLabel(services)}.`,
     "",
-    "Use these MCPs as local-first prep tools when the user's natural wording asks for repo context, log compaction, browser traces, screenshots, dependency/schema checks, documentation hygiene, or external context. The user does not need to type tool names.",
+    "Use HWAI Context Router as the local-first prep layer when the user's natural wording asks for repo context, log compaction, browser traces, screenshots, dependency/schema checks, or documentation hygiene. The user does not need to type MCP names.",
     "",
     "Core behavior:",
     "",
@@ -232,7 +243,6 @@ function agentAutopilotBlock({ profile, clients, services }) {
     "- Always read exact files before editing. MCP retrieval narrows context; it does not replace source inspection.",
     "- Keep frontier reasoning for ambiguous, high-risk, architecture-heavy, security-sensitive, or final-output-sensitive decisions.",
     "- Never send raw code, secrets, env files, lockfiles, screenshots, traces, private docs, or raw prompts to external services.",
-    "- For external web/search/crawl MCPs, use only user-configured endpoints and bearer keys from local env.",
     "",
     "Natural trigger vocabulary:",
     "",
@@ -244,9 +254,9 @@ function agentAutopilotBlock({ profile, clients, services }) {
 
 function markdownDoc({ profile, clients, services }) {
   return [
-    "# Humanswith.ai MCP Stack",
+    "# HWAI Context Router",
     "",
-    "This project has been connected to the Humanswith.ai MCP Stack.",
+    "This project has been connected to Humanswith.ai MCP Stack as HWAI Context Router, the local technical core of a Token Efficiency Platform for Agentic IDEs.",
     "",
     `- Installed profile: \`${profile}\``,
     `- Configured clients: ${clientListLabel(clients)}`,
@@ -254,14 +264,13 @@ function markdownDoc({ profile, clients, services }) {
     "",
     "## How Agents Should Use It",
     "",
-    "The stack is not a set of slash commands for the user to memorize. It is a local prep layer for Claude Code, Codex, Cursor, and Windsurf. Agents should infer when to use it from natural language.",
+    "HWAI Context Router is not a set of slash commands for the user to memorize. It is a local prep layer for Claude Code, Codex, Cursor, and Windsurf. Agents should infer when to use it from natural language, prepare compact evidence, and keep frontier reasoning for final judgment.",
     "",
     naturalTriggerTable(),
     "",
     "## Safety Rules",
     "",
     "- Local repo/file evidence stays local by default.",
-    "- External-context tools require user-provided endpoints and bearer keys.",
     "- Agents still inspect exact files before edits.",
     "- MCPs reduce noise and token waste; they do not replace frontier reasoning for hard judgment calls.",
     "- Do not commit `~/.hwai/mcp-stack/env`, generated MCP configs with secrets, traces, logs, screenshots, or request artifacts.",
@@ -276,11 +285,11 @@ function markdownDoc({ profile, clients, services }) {
 function cursorRule({ profile, clients, services }) {
   return [
     "---",
-    "description: Humanswith.ai MCP Stack autopilot trigger vocabulary",
+    "description: HWAI Context Router autopilot trigger vocabulary",
     "alwaysApply: true",
     "---",
     "",
-    "# Humanswith.ai MCP Stack Autopilot",
+    "# HWAI Context Router Autopilot",
     "",
     agentAutopilotBlock({ profile, clients, services }),
   ].join("\n");
@@ -290,10 +299,10 @@ function windsurfRule({ profile, clients, services }) {
   return [
     "---",
     "trigger: always_on",
-    "description: Humanswith.ai MCP Stack autopilot trigger vocabulary",
+    "description: HWAI Context Router autopilot trigger vocabulary",
     "---",
     "",
-    "# Humanswith.ai MCP Stack Autopilot",
+    "# HWAI Context Router Autopilot",
     "",
     agentAutopilotBlock({ profile, clients, services }),
   ].join("\n");

@@ -7,6 +7,7 @@ The service does **not** replace final reasoning. It prepares context:
 - long logs -> failing command, top errors, stack frames, impacted files, raw artifact
 - public URLs -> title, canonical URL, cleaned markdown, headings, key facts, links, warnings, parser-stack provenance
 - long text/specs/handoffs -> summary lines, decisions, action items, open questions, risks
+- long retrieved context/tool output -> query-aware extractive compression that keeps answer-relevant chunks
 - all modes -> compact output plus artifact URL for exact fallback
 - all calls -> JSONL request log with metadata only, never raw pasted content
 - local default traces -> `$HOME/.hwai/context-prep-mcp/requests.jsonl`
@@ -22,7 +23,13 @@ Use compact output when parser confidence is good. If exact wording, pricing, le
 - `prep_logs` — compact terminal/CI/build/test/runtime logs
 - `prep_url` — fetch and clean one public URL; local parser first, HWAI `scraper-core /fetch` fallback when needed
 - `prep_text` — compact long pasted text, specs, handoffs, meeting notes, chat history
+- `compress_context` — local deterministic query-aware/general extractive compression for long retrieved context or tool output
 - `get_artifact` — retrieve raw/cleaned artifacts by URL or file name
+
+`compress_context` is intentionally simpler than hosted context-compression
+products: no external API, no model call, deterministic scoring, and raw
+artifact fallback. Use it when the task needs answer-relevant chunks preserved
+instead of a lossy summary.
 
 ## Parser Stack Integration
 

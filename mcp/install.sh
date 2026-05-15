@@ -20,7 +20,7 @@ usage() {
 Usage: ./mcp/install.sh [options]
 
 Options:
-  --profile=core|repo|browser-debug|external-context|full
+  --profile=core|repo|browser-debug|full
   --clients=auto|claude,codex,cursor,windsurf
   --workspace=/absolute/project/path   Project/workspace to receive project MCP configs. Default: current directory.
   --source-root=/absolute/path         Existing bundled MCP source root. Default: ./mcp/source.

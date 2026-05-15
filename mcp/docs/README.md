@@ -24,7 +24,3 @@ Public documentation for the self-contained MCP bundle.
 - [playwright-trace-mcp](./modules/playwright-trace-mcp.md)
 - [vision-mcp](./modules/vision-mcp.md)
 - [visual-baseline-mcp](./modules/visual-baseline-mcp.md)
-- [scraper-mcp](./modules/scraper-mcp.md)
-- [searxng-mcp](./modules/searxng-mcp.md)
-- [reader-mcp](./modules/reader-mcp.md)
-- [crawl4ai-mcp](./modules/crawl4ai-mcp.md)

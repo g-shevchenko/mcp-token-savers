@@ -23,7 +23,7 @@ usage() {
 Usage: ./install.sh [options]
 
 Options:
-  --profile=core|repo|browser-debug|external-context|full   Default: core
+  --profile=core|repo|browser-debug|full   Default: core
   --clients=auto|claude,codex,cursor,windsurf               Default: auto
   --workspace=/absolute/project/path                        Default: current dir
   --repo-dir=/absolute/path                                 Default: ~/.hwai/hwai-mcp-stack
@@ -103,7 +103,7 @@ WORKSPACE="$(abs_path "$WORKSPACE")"
 REPO_DIR="$(abs_path "$REPO_DIR")"
 
 case "$PROFILE" in
-  core|repo|browser-debug|external-context|full) ;;
+  core|repo|browser-debug|full) ;;
   *) die "Unknown profile: $PROFILE" ;;
 esac
 
@@ -182,6 +182,3 @@ node "$REPO_DIR/mcp/bin/hwai-mcp.mjs" doctor \
 
 log "Done"
 echo "Restart Claude Code, Codex, Cursor, or Windsurf, or open a new chat so stdio MCP configs reload."
-if [[ "$PROFILE" == "full" || "$PROFILE" == "external-context" ]]; then
-  echo "External-context MCPs require endpoint URLs and bearer keys in ~/.hwai/mcp-stack/env."
-fi

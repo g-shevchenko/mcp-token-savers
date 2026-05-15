@@ -5,25 +5,35 @@
 [![CodeQL](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/codeql.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/scorecard.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/scorecard.yml)
 [![Last commit](https://img.shields.io/github/last-commit/g-shevchenko/hwai-mcp-stack)](https://github.com/g-shevchenko/hwai-mcp-stack/commits/main)
-[![MCP](https://img.shields.io/badge/MCP-21%20servers-blue)](./mcp/manifest.json)
+[![MCP](https://img.shields.io/badge/MCP-17%20local%20servers-blue)](./mcp/manifest.json)
 
-Local-first MCP servers for Claude Code, Codex, Cursor, and Windsurf.
+Local-first **Token Efficiency Platform for Agentic IDEs**.
 
-Give coding agents compact repo context, logs, traces, screenshots, quality
-checks, dependency risk, and documentation hygiene before they spend frontier
-model tokens. The default install is local-only. External web/search/crawl
-adapters are optional and require your own endpoints and bearer keys.
+The product goal is to help Claude Code, Codex, Cursor, and Windsurf spend
+fewer tokens on noisy context while preserving the quality bar. The technical
+core is **HWAI Context Router**: a local pre-reasoning layer that routes tasks
+to the smallest useful prep/evidence MCP before a frontier model spends tokens.
+
+The public stack is local-only. It does not install external web/search/crawl
+MCPs by default, and it does not require API keys for the default or full
+profile.
 
 ## Why
 
 Modern coding agents are strongest when they see the right evidence, not the
-largest possible prompt. Humanswith.ai MCP Stack gives them deterministic prep tools:
+largest possible prompt. HWAI Context Router gives them deterministic prep
+tools:
 
 - find the right files before editing;
 - compact huge logs, specs, traces, screenshots, and dependency reports;
 - catch repo/documentation drift early;
 - keep raw local evidence local by default;
 - work across Claude Code, Codex, Cursor, and Windsurf with the same MCP config.
+
+In product terms, the 17 local MCP servers are modules behind one Token
+Efficiency Platform. Agents should experience one workflow: classify the task,
+prepare the right compact local evidence, and reserve frontier model context for
+judgment rather than raw search, logs, traces, or screenshots.
 
 ## Verify First, Then Install
 
@@ -60,7 +70,7 @@ HWAI_MCP_BRANCH=v0.1.0 \
 /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/v0.1.0/install.sh)"
 ```
 
-Install all 21 MCP servers:
+Install all 17 local MCP servers:
 
 ```bash
 HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
@@ -92,7 +102,7 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 
 | Need | MCPs |
 | --- | --- |
-| Route ambiguous agent tasks to the right prep tool | `router-lite-mcp` |
+| Route ambiguous agent tasks to the right prep tool | **HWAI Context Router** via `router-lite-mcp` |
 | Retrieve compact repo context before edits | `retrieval-mcp`, `context-prep-mcp` |
 | Understand code structure and history | `language-graph-mcp`, `repo-history-mcp` |
 | Run local static checks and quality gates | `static-analysis-mcp`, `repo-quality-gate-mcp` |
@@ -100,17 +110,15 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Review contracts and dependency risk | `contract-schema-mcp`, `dependency-risk-mcp` |
 | Build regression datasets from real misses | `golden-dataset-mcp`, `agent-trace-mcp` |
 | Debug browser traces and visual changes | `playwright-trace-mcp`, `vision-mcp`, `visual-baseline-mcp` |
-| Add optional external context | `scraper-mcp`, `searxng-mcp`, `reader-mcp`, `crawl4ai-mcp` |
 
 ## Profiles
 
 | Profile | Installs | Best for |
 | --- | ---: | --- |
 | `core` | 6 MCPs | First install, safe local repo work |
-| `repo` | 14 MCPs | Large codebases, docs, hygiene, benchmarks |
+| `repo` | 14 MCPs | Large codebases, docs, hygiene, local regression cases |
 | `browser-debug` | 10 MCPs | Playwright traces, screenshots, visual checks |
-| `external-context` | 4 MCPs | Web/search/crawl wrappers over your own services |
-| `full` | 21 MCPs | Power users who want the whole stack |
+| `full` | 17 MCPs | All local token-efficiency MCPs, no external context required |
 
 ## Verification
 
@@ -126,11 +134,39 @@ The installer runs `doctor` automatically. You can rerun it anytime:
 Expected result for the full profile:
 
 ```text
-services: 21
-ok: 21
+services: 17
+ok: 17
 needs_attention: 0
 warnings: 0
 ```
+
+## Token Efficiency Claims
+
+This stack is designed to reduce token waste by preparing compact local evidence
+before an agent spends frontier-model context. It is fair to claim:
+
+- it can reduce prompt stuffing for repo-wide questions by retrieving likely
+  files/snippets first;
+- it can reduce noisy context from long logs, specs, traces, and screenshots by
+  turning them into compact evidence;
+- it can reduce repeated manual search by teaching Claude Code, Codex, Cursor,
+  and Windsurf the same local trigger vocabulary;
+- raw local evidence stays local by default.
+
+Do **not** claim a universal percentage reduction from the public README. Token
+savings depend on repo size, task type, agent behavior, and whether the agent
+would otherwise paste entire files/logs/screenshots into context.
+
+Publicly verified scope:
+
+- `core` and `full` profile install dry-runs;
+- `doctor` checks for bundled local services;
+- local repo retrieval and context-prep smoke paths;
+- local screenshot/trace preparation surfaces in the browser-debug profile;
+- public release audit that checks for secrets and internal references.
+
+See [Token efficiency claims](./docs/token-efficiency-claims.md) for the exact
+wording to use in public materials.
 
 ## Privacy And Security
 
@@ -142,8 +178,7 @@ warnings: 0
 - The default install path does not use `sudo` and does not install daemons.
 - Aggregate reports should not export raw code, prompts, URLs, screenshots,
   lockfiles, env files, or private docs.
-- External-context MCPs do not work until you provide your own endpoint URLs and
-  bearer keys in `~/.hwai/mcp-stack/env`.
+- The public `full` profile is local-only and does not require API keys.
 - Never commit `~/.hwai/mcp-stack/env` or generated request logs.
 
 ## Repository Layout
@@ -156,7 +191,7 @@ warnings: 0
 │   ├── install.sh             # local bundle installer
 │   ├── bin/hwai-mcp.mjs       # install/doctor CLI
 │   ├── docs/                  # module docs
-│   └── source/services/       # 21 bundled MCP servers
+│   └── source/services/       # bundled local MCP servers
 └── PUBLIC_RELEASE_AUDIT.md    # release safety checklist
 ```
 
@@ -165,6 +200,7 @@ warnings: 0
 - [MCP bundle details](./mcp/README.md)
 - [Module docs](./mcp/docs/README.md)
 - [Agent autopilot docs](./mcp/docs/AGENT_AUTOPILOT.md)
+- [Token efficiency claims](./docs/token-efficiency-claims.md)
 - [Trust and verification](./TRUST.md)
 - [Verify before install](./VERIFY_BEFORE_INSTALL.md)
 - [Machine-readable trust manifest](./trust/hwai-mcp-stack.trust.json)
@@ -173,11 +209,11 @@ warnings: 0
 
 ## Roadmap
 
-- Better module-by-module token-savings reports.
-- More one-click client installers.
-- Public example fixtures for screenshots, traces, logs, and repo hygiene.
-- Optional hosted external-context templates that do not require Humanswith.ai internal
-  infrastructure.
+- Improve local context compression for logs, specs, traces, and screenshots.
+- Add more one-click client installers.
+- Publish public-safe task examples for repo retrieval, log prep, trace prep,
+  and screenshot prep.
+- Keep the public install local-first and API-key-free by default.
 
 ## License
 

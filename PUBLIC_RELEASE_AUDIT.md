@@ -38,6 +38,7 @@ find . -name node_modules -o -name dist -o -name .env -o -name '*.jsonl' -o -nam
 rg -n -i '(api[_-]?key|token|secret|password|bearer|authorization|telegram|notion|chat_id|CREDENTIALS|hwai-internal|greg-personal|r2[-_]?d2|railway|webhook)' .
 bash scripts/agent-preinstall-check.sh
 node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=core
+node mcp/bin/hwai-mcp.mjs doctor --manifest=mcp/manifest.json --source-root=mcp/source --profile=full
 bash mcp/install.sh --profile=core --clients=codex --workspace="$PWD" --skip-build --dry-run
 bash mcp/install.sh --profile=core --clients=auto --workspace="$(mktemp -d)" --skip-build --dry-run
 ```
@@ -60,3 +61,6 @@ bash mcp/install.sh --profile=core --clients=auto --workspace="$(mktemp -d)" --s
   `AGENTS.md`, `CLAUDE.md`, Cursor/Windsurf rules, and
   `docs/humanswithai-mcp-stack.md` would be written. `HWAI_MCP_AGENT_DOCS=skip`
   / `--agent-docs=skip` is documented only as a config-only repair opt-out.
+- The public `full` profile is local-only. It should not require external
+  scraper, SERP, reader, Crawl4AI, API keys, private hosts, or internal
+  internal reporting jobs.
