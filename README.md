@@ -153,6 +153,20 @@ before an agent spends frontier-model context. It is fair to claim:
   and Windsurf the same local trigger vocabulary;
 - raw local evidence stays local by default.
 
+Measured local dogfood evidence
+([details](./docs/local-dogfood-eval-2026-04-30.md)):
+
+- In a 2026-04-30 local deterministic dogfood eval on 12 reviewed-public tasks,
+  Humanswith.ai MCP Stack reduced aggregate context-token usage by 75.5% and
+  aggregate total-token usage by 70.5% versus the baseline path.
+- The same run passed the quality gate: baseline success was 91.7%, stack
+  success was 100.0%, and critical false positives did not increase.
+- Context-token reduction by family ranged from 35.0% to 80.8% across repo
+  hygiene, traces, screenshots, logs, retrieval, and compression tasks.
+
+This is internal dogfood evidence, not an external benchmark or leaderboard
+claim.
+
 Do **not** claim a universal percentage reduction from the public README. Token
 savings depend on repo size, task type, agent behavior, and whether the agent
 would otherwise paste entire files/logs/screenshots into context.
@@ -201,6 +215,7 @@ wording to use in public materials.
 - [Module docs](./mcp/docs/README.md)
 - [Agent autopilot docs](./mcp/docs/AGENT_AUTOPILOT.md)
 - [Token efficiency claims](./docs/token-efficiency-claims.md)
+- [Local dogfood eval - 2026-04-30](./docs/local-dogfood-eval-2026-04-30.md)
 - [Trust and verification](./TRUST.md)
 - [Verify before install](./VERIFY_BEFORE_INSTALL.md)
 - [Machine-readable trust manifest](./trust/hwai-mcp-stack.trust.json)

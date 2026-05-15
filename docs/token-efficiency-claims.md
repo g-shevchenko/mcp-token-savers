@@ -20,6 +20,43 @@ It is safe to say:
   making broad judgments.
 - Raw repo evidence stays local by default.
 
+## Measured Local Dogfood Evidence
+
+The strongest measured result we can currently cite is a local deterministic
+dogfood run, not an external benchmark or leaderboard result.
+
+In the [2026-04-30 paired dogfood eval](./local-dogfood-eval-2026-04-30.md) on
+12 reviewed-public tasks, Humanswith.ai MCP Stack reduced aggregate
+context-token usage by **75.5%** and aggregate total-token usage by **70.5%**
+versus the baseline path. The quality gate passed: baseline success was
+**91.7%**, stack success was **100.0%**, and critical false positives did not
+increase.
+
+Context-token reduction by task family:
+
+| Task family | Cases | Context-token reduction |
+| --- | ---: | ---: |
+| Compression | 2 | 80.8% |
+| Retrieval / finding relevant files | 2 | 76.0% |
+| Logs | 2 | 71.8% |
+| Screenshots | 2 | 55.3% |
+| Browser traces | 2 | 48.3% |
+| Repo hygiene | 2 | 35.0% |
+
+Good public wording:
+
+> In a local deterministic dogfood eval on 12 reviewed-public tasks,
+> Humanswith.ai MCP Stack reduced aggregate context-token usage by 75.5% and
+> total-token usage by 70.5%, with no increase in critical false positives. This
+> is internal dogfood evidence, not an external benchmark.
+
+For course materials or talks, the safer plain-English version is:
+
+> On our local checks, the stack showed 35-80% context-token reduction depending
+> on task family. The strongest effect appears when agents would otherwise paste
+> or read a lot of raw context: project search, logs, browser traces,
+> screenshots, and long text compression.
+
 ## What Not To Claim Yet
 
 Do not claim a universal percentage such as "saves 80% tokens" or "keeps quality
@@ -71,6 +108,10 @@ Avoid:
 Avoid:
 
 > Fully automated proof that every agent will use fewer tokens.
+
+Avoid:
+
+> External benchmark proof or Terminal-Bench proof of MCP Stack quality.
 
 ## Lesson 8.1 Framing
 
