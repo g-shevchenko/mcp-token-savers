@@ -49,6 +49,10 @@ const SCREENSHOT_METADATA_SCHEMA = {
       type: "string",
       description: "Agent/client surface label for measurement only, for example claude, codex, cursor, or windsurf.",
     },
+    traffic_class: {
+      type: "string",
+      description: "Optional traffic attribution for measurement. Use production_like for real workflows and proof/benchmark/smoke for eval traffic.",
+    },
     client_surface: {
       type: "string",
       description: "Backward-compatible alias for surface.",
@@ -388,7 +392,16 @@ function metadataSurface(args: Record<string, unknown>): string | undefined {
   );
 }
 
-function trafficClass(source: string | undefined, surface: string | undefined, tool: string): string {
+function metadataTrafficClass(args: Record<string, unknown>): string | undefined {
+  const metadata = metadataRecord(args);
+  return cleanMetadataLabel(metadata?.traffic_class) || cleanMetadataLabel(args.traffic_class);
+}
+
+function trafficClass(args: Record<string, unknown>, source: string | undefined, surface: string | undefined, tool: string): string {
+  const explicit = metadataTrafficClass(args);
+  if (explicit && ["production_like", "proof", "benchmark", "smoke", "e2e", "unknown"].includes(explicit)) {
+    return explicit === "smoke" || explicit === "e2e" ? "proof" : explicit;
+  }
   const haystack = `${source || ""} ${surface || ""} ${tool || ""}`.toLowerCase();
   if (
     haystack.includes("golden") ||
@@ -429,7 +442,7 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
       verbose: Boolean(args.verbose),
       metadata_source: source,
       metadata_surface: surface,
-      traffic_class: trafficClass(source, surface, tool),
+      traffic_class: trafficClass(args, source, surface, tool),
       metadata_keys: args.metadata && typeof args.metadata === "object" ? Object.keys(args.metadata).slice(0, 20) : [],
     };
   }
@@ -444,7 +457,7 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
       verbose: Boolean(args.verbose),
       metadata_source: source,
       metadata_surface: surface,
-      traffic_class: trafficClass(source, surface, tool),
+      traffic_class: trafficClass(args, source, surface, tool),
       metadata_keys: args.metadata && typeof args.metadata === "object" ? Object.keys(args.metadata).slice(0, 20) : [],
     };
   }
@@ -462,16 +475,22 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
       verbose: Boolean(args.verbose),
       metadata_source: source,
       metadata_surface: surface,
-      traffic_class: trafficClass(source, surface, tool),
+      traffic_class: trafficClass(args, source, surface, tool),
       metadata_keys: args.metadata && typeof args.metadata === "object" ? Object.keys(args.metadata).slice(0, 20) : [],
     };
   }
 
   if (tool === "fetch_image" || tool === "image_url_to_text") {
+    const source = metadataSource(args);
+    const surface = metadataSurface(args);
     return {
       ...safeUrlSummary(args.url),
       context_chars: typeof args.context === "string" ? args.context.length : 0,
       max_size: args.maxSize,
+      metadata_source: source,
+      metadata_surface: surface,
+      traffic_class: trafficClass(args, source, surface, tool),
+      metadata_keys: args.metadata && typeof args.metadata === "object" ? Object.keys(args.metadata).slice(0, 20) : [],
     };
   }
 

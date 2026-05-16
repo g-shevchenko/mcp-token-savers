@@ -137,12 +137,19 @@ const safeForPantheon =
   pantheonExport.safe_for_pantheon === true &&
   scraperPantheonExport.safe_for_pantheon === true &&
   leakageFindings.length === 0;
+const syntheticRequestCount = Object.values(pantheonExport.services || {}).reduce(
+  (sum, service) => sum + Number(service?.trace_source_counts?.synthetic || 0),
+  0,
+);
 const manifest = {
   schema_version: "hwai-utility-mcp-daily-loop.v1",
+  product: "Token Efficiency Platform for Agentic IDEs",
+  technical_core: "HWAI Context Router",
   generated_at: new Date().toISOString(),
   date,
   safe_for_pantheon: safeForPantheon,
   outputs: {
+    token_efficiency_markdown_path: markdownPath,
     inbox_markdown_path: markdownPath,
     pantheon_export_path: pantheonPath,
     scraper_accounting_markdown_path: scraperMarkdownPath,
@@ -154,6 +161,17 @@ const manifest = {
     findings: leakageFindings,
   },
   summary: pantheonExport.summary,
+  automeasurement: {
+    production_like_request_count: pantheonExport.summary?.production_like_request_count || 0,
+    synthetic_request_count: syntheticRequestCount,
+    real_production_like_request_count: Math.max(
+      0,
+      (pantheonExport.summary?.production_like_request_count || 0) - syntheticRequestCount,
+    ),
+    unknown_request_count: pantheonExport.summary?.unknown_request_count || 0,
+    metadata_labeled_request_count: pantheonExport.summary?.metadata_labeled_request_count || 0,
+    metadata_labeled_pct: pantheonExport.summary?.metadata_labeled_pct || 0,
+  },
   services: pantheonExport.services,
   scraper_plane: {
     summary: scraperPantheonExport.summary,

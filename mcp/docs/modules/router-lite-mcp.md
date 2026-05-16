@@ -1,10 +1,12 @@
 # router-lite-mcp
 
-Local-first deterministic MCP trigger/skip policy router for Humanswith.ai utility prep tools
+Local-first deterministic trigger/skip policy for **HWAI Context Router**.
 
 ## Role in the stack
 
-Cheap deterministic trigger policy before expensive reasoning.
+`router-lite-mcp` is the current lightweight routing engine behind HWAI Context
+Router. It decides whether an agent should call a prep/evidence MCP before
+frontier reasoning, and records aggregate token-efficiency signals.
 
 ## When agents should use it
 
@@ -12,7 +14,9 @@ At the start of a task when it is unclear whether retrieval, context prep, visio
 
 ## What it improves
 
-Prevents unnecessary MCP calls while preserving frontier reasoning for ambiguous or high-risk tasks.
+Prevents unnecessary MCP calls while preserving frontier reasoning for
+ambiguous or high-risk tasks. The product-level goal is lower context spend
+without hiding quality risk.
 
 ## When not to use it
 

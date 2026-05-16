@@ -90,5 +90,23 @@
     "include_globs": ["services/pantheon-api/**"],
     "expected_paths": ["services/pantheon-api/src/providers/heartbeats.js"],
     "expected_terms": ["heartbeat"]
+  },
+  {
+    "name": "dogfood-public-installer-entrypoints",
+    "query": "Find the public installer entrypoint and the CLI implementation that exposes the doctor command.",
+    "task_intent": "implementation",
+    "root_path": "project",
+    "include_globs": ["install.sh", "mcp/bin/**", "mcp/install.sh", "README.md"],
+    "expected_paths": ["install.sh", "mcp/bin/hwai-mcp.mjs"],
+    "expected_terms": ["install", "doctor"]
+  },
+  {
+    "name": "dogfood-public-installer-safety-docs",
+    "query": "Find the files a cautious user or agent should read before running the one-command installer.",
+    "task_intent": "docs",
+    "root_path": "project",
+    "include_globs": ["TRUST.md", "VERIFY_BEFORE_INSTALL.md", "PUBLIC_RELEASE_AUDIT.md", "scripts/**", "trust/**", "README.md"],
+    "expected_paths": ["TRUST.md", "VERIFY_BEFORE_INSTALL.md", "scripts/agent-preinstall-check.sh", "trust/hwai-mcp-stack.trust.json"],
+    "expected_terms": ["trust", "verify", "preinstall"]
   }
 ]

@@ -8,6 +8,7 @@ import { retrieveContext } from "../dist/retrieval.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serviceDir = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(serviceDir, "../..");
+const projectRoot = path.resolve(serviceDir, "../../../..");
 const benchmarkDir = path.join(serviceDir, "benchmarks");
 const benchmarkFiles = ["golden-queries.json", "from-traces.json"];
 const NOISE_PATTERNS = [
@@ -30,6 +31,15 @@ function rankOf(paths, expectedPaths) {
 
 function reciprocalRank(rank) {
   return rank ? 1 / rank : 0;
+}
+
+async function pathExists(root, relativePath) {
+  try {
+    await fs.access(path.join(root, relativePath));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function hasNoise(paths) {
@@ -91,8 +101,33 @@ const failures = [];
 
 for (const testCase of cases) {
   const started = Date.now();
+  const caseRoot =
+    testCase.root_path === "project"
+      ? projectRoot
+      : typeof testCase.root_path === "string"
+        ? path.resolve(serviceDir, testCase.root_path)
+        : repoRoot;
+  const expectedPaths = Array.isArray(testCase.expected_paths) ? testCase.expected_paths : [];
+  const existingExpectedPaths = [];
+  for (const expectedPath of expectedPaths) {
+    if (await pathExists(caseRoot, expectedPath)) {
+      existingExpectedPaths.push(expectedPath);
+    }
+  }
+  if (expectedPaths.length > 0 && existingExpectedPaths.length === 0) {
+    rows.push({
+      name: testCase.name,
+      source_file: testCase.source_file,
+      skipped: true,
+      skip_reason: "expected paths are absent in this checkout",
+      missing_expected_paths: expectedPaths,
+      latency_ms: Date.now() - started,
+    });
+    continue;
+  }
+
   const result = await retrieveContext(testCase.query, config, {
-    root_path: repoRoot,
+    root_path: caseRoot,
     task_intent: testCase.task_intent || "unknown",
     include_globs: testCase.include_globs,
     exclude_globs: testCase.exclude_globs,
@@ -105,7 +140,7 @@ for (const testCase of cases) {
   const rankedPaths = result.ranked_files.map((file) => file.path);
   const snippetPaths = result.snippets.map((snippet) => snippet.path);
   const combinedPaths = [...rankedPaths, ...snippetPaths];
-  const rank = rankOf(rankedPaths, testCase.expected_paths);
+  const rank = rankOf(rankedPaths, existingExpectedPaths.length > 0 ? existingExpectedPaths : expectedPaths);
   const noise = hasNoise(combinedPaths);
   const termHit = snippetPrecision(result, testCase.expected_terms);
   const symbolHit = symbolPrecision(result, testCase.expected_symbols);
@@ -148,19 +183,23 @@ for (const testCase of cases) {
   }
 }
 
-const recallAt5 = rows.filter((row) => row.recall_at_5).length / rows.length;
-const recallAt10 = rows.filter((row) => row.recall_at_10).length / rows.length;
-const mrr = rows.reduce((sum, row) => sum + row.reciprocal_rank, 0) / rows.length;
-const symbolPrecisionRate = rows.filter((row) => row.symbol_precision).length / rows.length;
-const hintPrecisionRate = rows.filter((row) => row.hint_precision).length / rows.length;
-const avgSavings = rows.reduce((sum, row) => sum + (row.savings_pct || 0), 0) / rows.length;
-const p95Latency = rows
+const scoredRows = rows.filter((row) => !row.skipped);
+const divisor = scoredRows.length || 1;
+const recallAt5 = scoredRows.filter((row) => row.recall_at_5).length / divisor;
+const recallAt10 = scoredRows.filter((row) => row.recall_at_10).length / divisor;
+const mrr = scoredRows.reduce((sum, row) => sum + row.reciprocal_rank, 0) / divisor;
+const symbolPrecisionRate = scoredRows.filter((row) => row.symbol_precision).length / divisor;
+const hintPrecisionRate = scoredRows.filter((row) => row.hint_precision).length / divisor;
+const avgSavings = scoredRows.reduce((sum, row) => sum + (row.savings_pct || 0), 0) / divisor;
+const p95Latency = scoredRows
   .map((row) => row.latency_ms)
-  .sort((a, b) => a - b)[Math.min(rows.length - 1, Math.floor(rows.length * 0.95))];
+  .sort((a, b) => a - b)[Math.min(scoredRows.length - 1, Math.floor(scoredRows.length * 0.95))] || 0;
 
 const summary = {
   benchmark: "retrieval-mcp-golden",
   cases: rows.length,
+  scored_cases: scoredRows.length,
+  skipped_cases: rows.length - scoredRows.length,
   sources: Object.fromEntries(
     benchmarkFiles.map((fileName) => [
       fileName,

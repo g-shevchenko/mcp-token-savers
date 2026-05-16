@@ -91,6 +91,18 @@ const cases = [
     expectedMcps: ["repo-hygiene-mcp"],
   },
   {
+    name: "repo-release-hygiene-snapshot",
+    text: "Review the synthetic repo snapshot and identify the release hygiene issue: dist/bundle.js and dist/bundle.js.map are tracked.",
+    expectedDecision: "call_mcp",
+    expectedMcps: ["repo-hygiene-mcp"],
+  },
+  {
+    name: "repo-missing-license-file",
+    text: "Find the OSS release blocker from a public repository file list: package declares MIT but LICENSE file missing.",
+    expectedDecision: "call_mcp",
+    expectedMcps: ["repo-hygiene-mcp"],
+  },
+  {
     name: "quality-budget",
     text: "Check context pressure and new docs budget before merge",
     expectedDecision: "call_mcp",

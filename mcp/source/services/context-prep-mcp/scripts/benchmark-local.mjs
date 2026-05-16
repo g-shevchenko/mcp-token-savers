@@ -8,6 +8,7 @@ import { getContextPrepConfig } from "../dist/config.js";
 import { prepLogs } from "../dist/prep-logs.js";
 import { prepText } from "../dist/prep-text.js";
 import { prepUrl } from "../dist/prep-url.js";
+import { compressContext } from "../dist/compress-context.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serviceDir = path.resolve(__dirname, "..");
@@ -52,6 +53,20 @@ function longHandoffText() {
     "Decision: if uncertainty is above 0.03, inspect the raw artifact before final reasoning.",
   ].join("\n");
   return Array.from({ length: 70 }, () => block).join("\n\n");
+}
+
+function compressionText() {
+  const noise = Array.from(
+    { length: 60 },
+    (_, index) => `Noise paragraph ${index}: repeated background, installation prose, and unrelated release notes.`,
+  ).join("\n\n");
+  return [
+    noise,
+    "Evaluation policy: token-savings claims must pass a non-inferiority quality gate.",
+    "The gate keeps task success within five percentage points, Recall@10 within 0.03, and critical false positives flat.",
+    "Fallback rule: if uncertainty is high or exact wording matters, inspect the raw artifact before final reasoning.",
+    noise,
+  ].join("\n\n");
 }
 
 function benchmarkHtml() {
@@ -223,6 +238,27 @@ rows.push(
   ),
 );
 
+rows.push(
+  await runCase(
+    "context-compression-query-aware",
+    async () => {
+      const result = await compressContext(compressionText(), config, {
+        query: "non-inferiority quality gate Recall@10 critical false positives",
+        target_ratio: 0.1,
+        metadata: { source: "benchmark-local", traffic_class: "benchmark" },
+      });
+      assertIncludes(result.compressed_context, "non-inferiority quality gate", "missing quality gate evidence");
+      assertIncludes(result.compressed_context, "Recall@10", "missing Recall@10 evidence");
+      assertIncludes(result.compressed_context, "critical false positives", "missing false-positive evidence");
+      return result;
+    },
+    {
+      min_savings_pct: 50,
+      requires_artifacts: true,
+    },
+  ),
+);
+
 for (const row of rows) {
   for (const failure of row.failures) {
     failures.push(`${row.name}: ${failure}`);
@@ -242,6 +278,7 @@ const summary = {
     logs_min_savings_pct: 60,
     text_min_savings_pct: 80,
     url_min_savings_pct: 50,
+    compression_min_savings_pct: 50,
     url_expected_parser: "local",
     artifact_fallback_required: true,
   },
