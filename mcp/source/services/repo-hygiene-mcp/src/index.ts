@@ -23,11 +23,12 @@ const config = getRepoHygieneConfig();
 const METADATA_SCHEMA = {
   type: "object",
   description:
-    "Optional metadata for attribution. Recommended: source, task_id, surface, repo, branch. Do not include raw prompts, code, secrets, file bodies, or long notes.",
+    "Optional metadata for attribution. Recommended: source, task_id, surface, traffic_class, repo, branch. Do not include raw prompts, code, secrets, file bodies, or long notes.",
   properties: {
     source: { type: "string" },
     task_id: { type: "string" },
     surface: { type: "string" },
+    traffic_class: { type: "string" },
     repo: { type: "string" },
     branch: { type: "string" },
   },
@@ -145,6 +146,15 @@ function metadataSource(args: Record<string, unknown> | undefined): string | und
   return typeof source === "string" && source.trim() ? source.trim().slice(0, 80) : undefined;
 }
 
+function metadataValue(args: Record<string, unknown> | undefined, key: string): string | undefined {
+  const metadata = args?.metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 80) : undefined;
+}
+
 function summarizeInput(tool: string, args: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!args) {
     return {};
@@ -166,6 +176,8 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
     since_iso: args.since_iso,
     until_iso: args.until_iso,
     metadata_source: metadataSource(args),
+    metadata_surface: metadataValue(args, "surface"),
+    traffic_class: metadataValue(args, "traffic_class"),
   };
 }
 

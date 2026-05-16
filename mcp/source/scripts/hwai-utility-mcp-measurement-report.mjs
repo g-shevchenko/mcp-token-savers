@@ -375,6 +375,17 @@ function trafficClass(row) {
   }).toLowerCase();
 
   if (
+    /\b(claude|codex|cursor|windsurf|agent)\b/.test(haystack) &&
+    !/(smoke|e2e|proof|test|fixture|benchmark|bench|regression)/.test(source)
+  ) {
+    return "production_like";
+  }
+
+  if (source && !/(smoke|e2e|proof|test|fixture|benchmark|bench|regression)/.test(source)) {
+    return "production_like";
+  }
+
+  if (
     haystack.includes("golden") ||
     haystack.includes("benchmark") ||
     haystack.includes("bench") ||
@@ -392,7 +403,11 @@ function trafficClass(row) {
   ) {
     return "proof";
   }
-  if (/\b(claude|codex|cursor|windsurf|agent)\b/.test(haystack)) {
+  if (
+    row.service === "vision-mcp" &&
+    ["fetch_image", "image_url_to_text"].includes(row.tool) &&
+    input.url_host
+  ) {
     return "production_like";
   }
   return "unknown";
@@ -441,6 +456,11 @@ function summarizeFeedbackCandidate(row) {
 function serviceRollup(service, requestRows, feedbackRows = []) {
   const durations = requestRows.map((row) => number(row.duration_ms));
   const tokenEvents = requestRows.map(tokenEvent).filter(Boolean);
+  const trafficCounts = countBy(requestRows, trafficClass);
+  const traceSourceCounts = countBy(requestRows, traceSource);
+  const productionLikeRequests = number(trafficCounts.production_like);
+  const unknownRequests = number(trafficCounts.unknown);
+  const metadataLabeledRequests = requestRows.filter((row) => traceSource(row) !== "unknown").length;
   const sourceTokens = tokenEvents.reduce((sum, item) => sum + item.sourceTokens, 0);
   const compactTokens = tokenEvents.reduce((sum, item) => sum + item.compactTokens, 0);
   const savedTokens = tokenEvents.reduce((sum, item) => sum + item.savedTokens, 0);
@@ -473,6 +493,10 @@ function serviceRollup(service, requestRows, feedbackRows = []) {
     errors: errors.length,
     actionable_error_count: actionableErrors.length,
     proof_loop_error_count: proofLoopErrors.length,
+    production_like_request_count: productionLikeRequests,
+    unknown_request_count: unknownRequests,
+    metadata_labeled_request_count: metadataLabeledRequests,
+    metadata_labeled_pct: requestRows.length > 0 ? round((metadataLabeledRequests / requestRows.length) * 100) : 0,
     token_events: tokenEvents.length,
     source_tokens_estimate: sourceTokens,
     compact_tokens_estimate: compactTokens,
@@ -486,8 +510,8 @@ function serviceRollup(service, requestRows, feedbackRows = []) {
     p95_latency_ms: percentile(durations, 0.95),
     by_tool: countBy(requestRows, (row) => row.tool),
     by_transport: countBy(requestRows, (row) => row.transport),
-    by_traffic_class: countBy(requestRows, trafficClass),
-    by_trace_source: countBy(requestRows, traceSource),
+    by_traffic_class: trafficCounts,
+    by_trace_source: traceSourceCounts,
     quality_counts: qualityCounters(requestRows),
     feedback: {
       count: feedbackRows.length,
@@ -534,6 +558,15 @@ function buildRecommendations(services) {
     if (item.feedback.benchmark_candidates > 0) {
       recommendations.push(`${item.service.name}: promote benchmark_candidate feedback into reviewed regression cases before ranking changes.`);
     }
+    if (item.requests > 0 && item.production_like_request_count === 0 && item.unknown_request_count > 0) {
+      recommendations.push(
+        `${item.service.name}: traces exist but none are labeled production_like; refresh agent docs or metadata wiring so Greg's normal work is measured automatically.`,
+      );
+    } else if (item.unknown_request_count > 0) {
+      recommendations.push(
+        `${item.service.name}: ${item.unknown_request_count} request(s) have unknown traffic_class; improve safe metadata coverage on the calling agent surface.`,
+      );
+    }
   }
   if (recommendations.length === 0) {
     recommendations.push("No immediate action from this window; keep collecting real traces before tuning.");
@@ -550,6 +583,7 @@ function traceSourceExportCounts(byTraceSource) {
     proof_loop: number(byTraceSource?.proof_loop),
     benchmark: number(byTraceSource?.benchmark),
     unknown: number(byTraceSource?.unknown),
+    synthetic: sumValues(byTraceSource, (key) => key.toLowerCase().includes("synthetic")),
     labeled: sumValues(byTraceSource, (key) => key !== "proof_loop" && key !== "benchmark" && key !== "unknown"),
   };
 }
@@ -562,6 +596,10 @@ function servicePantheonExport(item) {
     errors: item.errors,
     actionable_error_count: item.actionable_error_count,
     proof_loop_error_count: item.proof_loop_error_count,
+    production_like_request_count: item.production_like_request_count,
+    unknown_request_count: item.unknown_request_count,
+    metadata_labeled_request_count: item.metadata_labeled_request_count,
+    metadata_labeled_pct: item.metadata_labeled_pct,
     token_events: item.token_events,
     source_tokens_estimate: item.source_tokens_estimate,
     compact_tokens_estimate: item.compact_tokens_estimate,
@@ -608,7 +646,10 @@ function buildPantheonExport(report) {
 
 function renderMarkdown(report) {
   const lines = [];
-  lines.push("# HWAI Utility MCP Measurement Digest");
+  lines.push("# HWAI Token Efficiency Daily Digest");
+  lines.push("");
+  lines.push("Product: Token Efficiency Platform for Agentic IDEs");
+  lines.push("Technical core: HWAI Context Router");
   lines.push("");
   lines.push(`Generated: ${report.generated_at}`);
   lines.push(`Window: ${report.filters.since_iso || "beginning"} -> ${report.filters.until_iso || "now"}`);
@@ -623,6 +664,9 @@ function renderMarkdown(report) {
   lines.push("");
   lines.push(`Total saved tokens estimate: ${report.summary.saved_tokens_estimate}`);
   lines.push(`Weighted savings: ${report.summary.savings_pct}%`);
+  lines.push(`Production-like requests: ${report.summary.production_like_request_count}`);
+  lines.push(`Unknown traffic-class requests: ${report.summary.unknown_request_count}`);
+  lines.push(`Metadata-labeled requests: ${report.summary.metadata_labeled_request_count} (${report.summary.metadata_labeled_pct}%)`);
   lines.push("");
   lines.push("Pantheon-safe export: `--format=pantheon` returns aggregate-only telemetry without samples, raw queries, paths, notes, local log paths, or artifact URLs.");
   lines.push("");
@@ -792,6 +836,9 @@ const totals = Object.values(serviceReports).reduce(
     acc.errors += item.errors;
     acc.actionable_error_count += item.actionable_error_count;
     acc.proof_loop_error_count += item.proof_loop_error_count;
+    acc.production_like_request_count += item.production_like_request_count;
+    acc.unknown_request_count += item.unknown_request_count;
+    acc.metadata_labeled_request_count += item.metadata_labeled_request_count;
     acc.token_events += item.token_events;
     acc.source_tokens_estimate += item.source_tokens_estimate;
     acc.compact_tokens_estimate += item.compact_tokens_estimate;
@@ -808,6 +855,9 @@ const totals = Object.values(serviceReports).reduce(
     errors: 0,
     actionable_error_count: 0,
     proof_loop_error_count: 0,
+    production_like_request_count: 0,
+    unknown_request_count: 0,
+    metadata_labeled_request_count: 0,
     token_events: 0,
     source_tokens_estimate: 0,
     compact_tokens_estimate: 0,
@@ -822,6 +872,8 @@ const totals = Object.values(serviceReports).reduce(
 
 const report = {
   schema_version: "hwai-utility-mcp-measurement-report.v1",
+  product: "Token Efficiency Platform for Agentic IDEs",
+  technical_core: "HWAI Context Router",
   generated_at: new Date().toISOString(),
   filters: {
     date: window.date,
@@ -834,6 +886,8 @@ const report = {
       totals.source_tokens_estimate > 0
         ? round((totals.saved_tokens_estimate / totals.source_tokens_estimate) * 100)
         : 0,
+    metadata_labeled_pct:
+      totals.requests > 0 ? round((totals.metadata_labeled_request_count / totals.requests) * 100) : 0,
   },
   services: serviceReports,
 };

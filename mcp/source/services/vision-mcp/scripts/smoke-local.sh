@@ -14,6 +14,35 @@ SMOKE_DATE="$("$NODE_BIN" -e 'console.log(new Date().toISOString().slice(0, 10))
 cd "$SERVICE_DIR"
 npm run build >/dev/null
 
+"$NODE_BIN" --input-type=module <<'NODE'
+import { getVisionConfig } from "./dist/config.js";
+import { assertAllowedImageUrl } from "./dist/url-policy.js";
+
+delete process.env.VISION_ALLOWED_HOSTS;
+const defaultConfig = getVisionConfig();
+
+try {
+  assertAllowedImageUrl(
+    "https://cdn.hwai-ops.xyz/screenshots/vision-allowlist-smoke.png",
+    defaultConfig.allowedHosts,
+    false,
+  );
+  throw new Error("unexpected product-default allowlist pass for cdn.hwai-ops.xyz");
+} catch (error) {
+  if (!String(error?.message || error).includes("not allowed")) {
+    throw error;
+  }
+}
+
+process.env.VISION_ALLOWED_HOSTS = "example.com,cdn.hwai-ops.xyz";
+const gregConfig = getVisionConfig();
+assertAllowedImageUrl(
+  "https://cdn.hwai-ops.xyz/screenshots/vision-allowlist-smoke.png",
+  gregConfig.allowedHosts,
+  gregConfig.allowAnyImageUrl,
+);
+NODE
+
 "$NODE_BIN" - "$PORT_FILE" <<'NODE' &
 const fs = require("node:fs");
 const http = require("node:http");

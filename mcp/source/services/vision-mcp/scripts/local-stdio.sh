@@ -3,6 +3,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVICE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENV_FILE="${HWAI_MCP_ENV_FILE:-$HOME/.hwai/mcp-stack/env}"
+
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+fi
 
 export VISION_MCP_CACHE_DIR="${VISION_MCP_CACHE_DIR:-$HOME/.hwai/vision-mcp}"
 

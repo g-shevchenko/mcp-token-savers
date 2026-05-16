@@ -123,9 +123,17 @@ export function classifyInput(args: RouterLiteArgs = {}): RouteResult {
     /\b(где|какие файлы|кодовой базе|репо|баг|рефактор|ветк)\b/,
   ]);
   const staticAnalysisTask = includesAny(normalized, [/\b(run|check)\s+(tests?|build|tsc|eslint|lint|typecheck)\b/, /\bproof loop\b/]);
-  const dependencyTask = includesAny(normalized, [/\b(npm audit|osv|license|dependency|lockfile|supply chain|vulnerabilit)\b/]);
+  const repoReleaseHygieneTask = includesAny(normalized, [
+    /\b(release hygiene|repo hygiene|repository hygiene|public repo(?:sitory)? file list|repo snapshot|synthetic repo snapshot)\b/,
+    /\b(generated artifacts?|generated dist|tracked dist|missing license file|license file missing|public release blocker)\b/,
+  ]);
+  const dependencyTask =
+    !repoReleaseHygieneTask &&
+    includesAny(normalized, [/\b(npm audit|osv|license|dependency|lockfile|supply chain|vulnerabilit)\b/]);
   const docsTask = includesAny(normalized, [/\b(broken links?|stale refs?|frontmatter|docs hygiene|orphan docs?|notion mirror|docs sync)\b/]);
-  const cleanupTask = includesAny(normalized, [/\b(unused exports?|unused dependencies?|duplicate code|repo hygiene|cleanup plan)\b/]);
+  const cleanupTask =
+    repoReleaseHygieneTask ||
+    includesAny(normalized, [/\b(unused exports?|unused dependencies?|duplicate code|repo hygiene|cleanup plan)\b/]);
   const qualityGateTask = includesAny(normalized, [/\b(context pressure|quality gate|new code budget|new docs budget|large docs?)\b/]);
   const recommendations: RouteRecommendation[] = [];
 

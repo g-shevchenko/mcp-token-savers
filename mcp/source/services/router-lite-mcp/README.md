@@ -1,8 +1,14 @@
 # HWAI Router Lite MCP
 
-Local-first deterministic trigger/skip policy for HWAI utility MCP prep tools.
+Local-first deterministic trigger/skip policy for **HWAI Context Router**.
 
-`router-lite-mcp` decides whether a task should first call a prep/evidence MCP such as `vision-mcp`, `context-prep-mcp`, `retrieval-mcp`, `playwright-trace-mcp`, `static-analysis-mcp`, `dependency-risk-mcp`, `docs-hygiene-mcp`, `repo-hygiene-mcp`, `repo-quality-gate-mcp`, or the scraper stack. It does not answer user tasks, choose final models, edit files, deploy, or replace frontier reasoning.
+`router-lite-mcp` is the lightweight routing engine for the Token Efficiency
+Platform for Agentic IDEs. It decides whether a task should first call a
+prep/evidence MCP such as `vision-mcp`, `context-prep-mcp`, `retrieval-mcp`,
+`playwright-trace-mcp`, `static-analysis-mcp`, `dependency-risk-mcp`,
+`docs-hygiene-mcp`, `repo-hygiene-mcp`, `repo-quality-gate-mcp`, or the scraper
+stack. It does not answer user tasks, choose final models, edit files, deploy,
+or replace frontier reasoning.
 
 The first version is intentionally boring: deterministic rules only, benchmarked trigger/skip precision, local metadata-only traces, and `cheap_only_allowed=false` on every result.
 

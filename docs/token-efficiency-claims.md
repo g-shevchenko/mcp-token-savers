@@ -57,6 +57,7 @@ For course materials or talks, the safer plain-English version is:
 > or read a lot of raw context: project search, logs, browser traces,
 > screenshots, and long text compression.
 
+
 ## What Not To Claim Yet
 
 Do not claim a universal percentage such as "saves 80% tokens" or "keeps quality
@@ -112,6 +113,7 @@ Avoid:
 Avoid:
 
 > External benchmark proof or Terminal-Bench proof of MCP Stack quality.
+
 
 ## Lesson 8.1 Framing
 

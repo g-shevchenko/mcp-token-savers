@@ -3,6 +3,7 @@ import path from "node:path";
 export const SCREENSHOT_ANALYSIS_PROMPT_VERSION = "2026-04-23.phase8-diff-mode";
 export const CROP_PIPELINE_VERSION = "2026-04-23.red-annotation-regions-v4";
 export const OPTIMIZATION_PIPELINE_VERSION = "2026-04-23.prep-first-diff";
+export const DEFAULT_ALLOWED_IMAGE_HOSTS = ["example.com"];
 
 export interface VisionRuntimeConfig {
   allowAnyImageUrl: boolean;
@@ -69,7 +70,7 @@ export function getVisionConfig(): VisionRuntimeConfig {
 
   return {
     allowAnyImageUrl: process.env.ALLOW_ANY_IMAGE_URL === "1",
-    allowedHosts: splitCsv(process.env.VISION_ALLOWED_HOSTS, ["example.com"]),
+    allowedHosts: splitCsv(process.env.VISION_ALLOWED_HOSTS, DEFAULT_ALLOWED_IMAGE_HOSTS),
     artifactDir: process.env.VISION_MCP_ARTIFACT_DIR || path.join(cacheDir, "artifacts"),
     cacheDir,
     cacheTtlMs: readPositiveInt(process.env.VISION_MCP_CACHE_TTL_SEC, 7 * 24 * 60 * 60) * 1000,

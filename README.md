@@ -167,6 +167,7 @@ Measured local dogfood evidence
 This is internal dogfood evidence, not an external benchmark or leaderboard
 claim.
 
+
 Do **not** claim a universal percentage reduction from the public README. Token
 savings depend on repo size, task type, agent behavior, and whether the agent
 would otherwise paste entire files/logs/screenshots into context.
@@ -216,6 +217,7 @@ wording to use in public materials.
 - [Agent autopilot docs](./mcp/docs/AGENT_AUTOPILOT.md)
 - [Token efficiency claims](./docs/token-efficiency-claims.md)
 - [Local dogfood eval - 2026-04-30](./docs/local-dogfood-eval-2026-04-30.md)
+
 - [Trust and verification](./TRUST.md)
 - [Verify before install](./VERIFY_BEFORE_INSTALL.md)
 - [Machine-readable trust manifest](./trust/hwai-mcp-stack.trust.json)

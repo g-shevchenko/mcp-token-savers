@@ -63,4 +63,4 @@ bash mcp/install.sh --profile=core --clients=auto --workspace="$(mktemp -d)" --s
   / `--agent-docs=skip` is documented only as a config-only repair opt-out.
 - The public `full` profile is local-only. It should not require external
   scraper, SERP, reader, Crawl4AI, API keys, private hosts, or internal
-  internal reporting jobs.
+  reporting or measurement jobs.

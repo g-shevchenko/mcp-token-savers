@@ -72,6 +72,23 @@ function traceSource(row) {
   return "unknown";
 }
 
+function trafficClass(row) {
+  const input = row.input || {};
+  const explicit = typeof input.metadata_traffic_class === "string" ? input.metadata_traffic_class.trim() : "";
+  if (explicit) {
+    return explicit.slice(0, 80);
+  }
+
+  const source = traceSource(row);
+  if (source === "proof_loop") {
+    return "proof_loop";
+  }
+  if (source === "unknown") {
+    return "unknown";
+  }
+  return "production_like";
+}
+
 function sanitizeSampleValue(value) {
   if (Array.isArray(value)) {
     return value.slice(0, 20).map(sanitizeSampleValue);
@@ -109,6 +126,7 @@ function summarizeHighUncertainty(row) {
     tool: row.tool,
     transport: row.transport,
     trace_source: traceSource(row),
+    traffic_class: trafficClass(row),
     duration_ms: row.duration_ms,
     uncertainty: uncertainty(row),
     input: sanitizeSampleValue(row.input || {}),
@@ -178,6 +196,29 @@ function countTraceSources(byTraceSource) {
   };
 }
 
+function buildCompressionSummary(rows) {
+  const compressionRows = rows.filter((row) => row.tool === "compress_context" || row.output?.prep_mode === "context-compression");
+  const aggressiveRows = compressionRows.filter((row) => Number(row.output?.compression_target_ratio || 1) <= 0.2);
+  const fallbackRows = compressionRows.filter((row) => row.output?.requires_clarification === true);
+  const rawTokens = compressionRows.reduce((sum, row) => sum + Number(row.output?.raw_tokens_estimate || 0), 0);
+  const savedTokens = compressionRows.reduce((sum, row) => sum + Number(row.output?.saved_tokens_estimate || 0), 0);
+  return {
+    requests: compressionRows.length,
+    aggressive_requests: aggressiveRows.length,
+    raw_artifact_fallback_recommended: fallbackRows.length,
+    saved_tokens_estimate: savedTokens,
+    savings_pct: rawTokens > 0 ? round((savedTokens / rawTokens) * 100) : 0,
+    avg_units_kept:
+      compressionRows.length > 0
+        ? round(
+            compressionRows.reduce((sum, row) => sum + Number(row.output?.units_kept || 0), 0) /
+              compressionRows.length,
+            2,
+          )
+        : 0,
+  };
+}
+
 function buildPantheonExport(payload) {
   return {
     schema_version: "context-prep-mcp-pantheon-export.v1",
@@ -197,6 +238,9 @@ function buildPantheonExport(payload) {
     by_tool: payload.by_tool,
     by_transport: payload.by_transport,
     by_parser: payload.by_parser,
+    by_compression_mode: payload.by_compression_mode,
+    by_traffic_class: payload.by_traffic_class,
+    compression_summary: payload.compression_summary,
     by_scraper_fallback_reason: payload.by_scraper_fallback_reason,
     trace_source_counts: countTraceSources(payload.by_trace_source),
   };
@@ -215,7 +259,11 @@ function renderMarkdown(payload) {
   lines.push(`Weighted savings: ${payload.summary.weighted_savings_pct}%`);
   lines.push(`High uncertainty: ${payload.summary.high_uncertainty_count}`);
   lines.push(`Actionable high uncertainty: ${payload.summary.actionable_high_uncertainty_count}`);
+  lines.push(`Production-like requests: ${payload.summary.production_like_requests}`);
+  lines.push(`Proof/eval requests: ${payload.summary.proof_or_eval_requests}`);
   lines.push(`p95 latency ms: ${payload.summary.p95_latency_ms}`);
+  lines.push(`Compression requests: ${payload.compression_summary.requests}`);
+  lines.push(`Compression savings: ${payload.compression_summary.savings_pct}%`);
   lines.push("");
   lines.push("Pantheon-safe export: `--format=pantheon` returns aggregate-only telemetry without raw inputs, URLs, local log paths, samples, or artifact URLs.");
   lines.push("");
@@ -227,6 +275,16 @@ function renderMarkdown(payload) {
   lines.push("## By Parser");
   for (const [parser, value] of Object.entries(payload.by_parser)) {
     lines.push(`- ${parser}: ${value.requests} requests, ${value.saved_tokens_estimate} saved tokens, ${value.savings_pct}% savings`);
+  }
+  lines.push("");
+  lines.push("## By Compression Mode");
+  for (const [mode, value] of Object.entries(payload.by_compression_mode)) {
+    lines.push(`- ${mode}: ${value.requests} requests, ${value.saved_tokens_estimate} saved tokens, ${value.savings_pct}% savings`);
+  }
+  lines.push("");
+  lines.push("## By Traffic Class");
+  for (const [klass, value] of Object.entries(payload.by_traffic_class)) {
+    lines.push(`- ${klass}: ${value.requests} requests, ${value.saved_tokens_estimate} saved tokens, ${value.savings_pct}% savings`);
   }
   lines.push("");
   return `${lines.join("\n")}\n`;
@@ -257,7 +315,12 @@ const totalCompact = rows.reduce((sum, row) => sum + Number(row.output?.compact_
 const totalSaved = rows.reduce((sum, row) => sum + Number(row.output?.saved_tokens_estimate || 0), 0);
 const errors = rows.filter((row) => !row.ok);
 const highUncertainty = rows.filter(isHighUncertainty);
-const actionableHighUncertainty = highUncertainty.filter((row) => traceSource(row) !== "proof_loop");
+const actionableHighUncertainty = highUncertainty.filter((row) => trafficClass(row) === "production_like");
+const byTrafficClass = rollupBy(rows, trafficClass);
+const proofOrEvalRequests = ["proof_loop", "benchmark", "smoke", "e2e"].reduce(
+  (sum, klass) => sum + Number(byTrafficClass[klass]?.requests || 0),
+  0,
+);
 
 const payload = {
   schema_version: "context-prep-measurement-report.v1",
@@ -280,6 +343,9 @@ const payload = {
     high_uncertainty_count: highUncertainty.length,
     actionable_high_uncertainty_count: actionableHighUncertainty.length,
     proof_loop_high_uncertainty_count: highUncertainty.length - actionableHighUncertainty.length,
+    production_like_requests: Number(byTrafficClass.production_like?.requests || 0),
+    proof_or_eval_requests: proofOrEvalRequests,
+    unknown_traffic_class_requests: Number(byTrafficClass.unknown?.requests || 0),
     p95_latency_ms: percentile(durations, 0.95),
     first_ts: rows[0]?.ts || null,
     last_ts: rows.at(-1)?.ts || null,
@@ -287,6 +353,9 @@ const payload = {
   by_tool: rollupBy(rows, (row) => row.tool),
   by_transport: rollupBy(rows, (row) => row.transport),
   by_parser: rollupBy(rows, (row) => row.output?.parser_used || "n/a"),
+  by_compression_mode: rollupBy(rows, (row) => row.output?.compression_mode || "n/a"),
+  by_traffic_class: byTrafficClass,
+  compression_summary: buildCompressionSummary(rows),
   by_scraper_fallback_reason: rollupBy(rows, (row) => row.output?.scraper_fallback_reason || "none"),
   by_trace_source: rollupBy(rows, traceSource),
   high_uncertainty_samples: highUncertainty.slice(-10).map(summarizeHighUncertainty),

@@ -25,7 +25,7 @@ npm run smoke
 For URL inputs, either set a safe allowlist:
 
 ```bash
-VISION_ALLOWED_HOSTS=example.com
+VISION_ALLOWED_HOSTS=example.com,your-screenshot-cdn.example
 ```
 
 or explicitly allow arbitrary image URLs for local experiments:
@@ -33,6 +33,23 @@ or explicitly allow arbitrary image URLs for local experiments:
 ```bash
 ALLOW_ANY_IMAGE_URL=1
 ```
+
+By default, Vision-MCP allows only neutral sample hosts. Team- or customer-
+specific screenshot CDNs must be configured locally through
+`VISION_ALLOWED_HOSTS`; they are not baked into the open-source or commercial
+product defaults.
+
+If an already-open Claude Code, Codex, Cursor, or Windsurf session still rejects
+that host after an update, restart the agent session or open a new chat so the
+stdio MCP process reloads its code and environment. For Greg MacBook dogfood,
+the local-only override is:
+
+```bash
+VISION_ALLOWED_HOSTS=example.com,cdn.hwai-ops.xyz
+```
+
+Use `ALLOW_ANY_IMAGE_URL=1` only for trusted local debugging; it disables the
+host allowlist.
 
 ## Privacy
 

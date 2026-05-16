@@ -277,10 +277,94 @@ const PATH_BOOST_STOP_WORDS = new Set([
   "claude",
 ]);
 
+const GENERIC_PATH_MATCH_STOP_WORDS = new Set([
+  ...PATH_BOOST_STOP_WORDS,
+  "agent",
+  "files",
+  "read",
+  "runn",
+  "running",
+  "user",
+]);
+
 function importantPathTerms(terms: string[]): string[] {
   return terms
     .map((term) => term.toLowerCase())
     .filter((term) => term.length >= 4 && !PATH_BOOST_STOP_WORDS.has(term));
+}
+
+function hasAnyTerm(terms: Set<string>, candidates: string[]): boolean {
+  return candidates.some((candidate) => terms.has(candidate));
+}
+
+function installerSafetyPathScore(relativePath: string, terms: string[]): { score: number; reasons: string[] } {
+  const normalized = relativePath.toLowerCase();
+  const lowerTerms = new Set(terms.map((term) => term.toLowerCase()));
+  const reasons: string[] = [];
+  let score = 0;
+
+  const installIntent = hasAnyTerm(lowerTerms, [
+    "install",
+    "installer",
+    "installing",
+    "one-command",
+    "bootstrap",
+    "setup",
+  ]);
+  const safetyIntent = hasAnyTerm(lowerTerms, [
+    "audit",
+    "before",
+    "cautious",
+    "preinstall",
+    "safety",
+    "trust",
+    "verify",
+  ]);
+  const entrypointIntent = hasAnyTerm(lowerTerms, ["cli", "command", "doctor", "entrypoint", "entrypoints"]);
+
+  if (installIntent && normalized === "install.sh") {
+    score += 58;
+    reasons.push("root installer entrypoint boosted by install intent");
+  }
+
+  if ((installIntent || entrypointIntent) && normalized === "mcp/bin/hwai-mcp.mjs") {
+    score += entrypointIntent ? 56 : 34;
+    reasons.push("HWAI CLI entrypoint boosted by command intent");
+  }
+
+  if (installIntent && /(^|\/)(install|bootstrap|setup)[^/]*\.(sh|mjs|js|ts)$/.test(normalized)) {
+    score += 20;
+    reasons.push("installer-like script boosted by install intent");
+  }
+
+  if (safetyIntent) {
+    if (normalized === "trust.md") {
+      score += 110;
+      reasons.push("root trust doc boosted by safety intent");
+    } else if (normalized === "verify_before_install.md") {
+      score += 110;
+      reasons.push("install verification doc boosted by safety intent");
+    } else if (normalized === "scripts/agent-preinstall-check.sh") {
+      score += 110;
+      reasons.push("preinstall check boosted by safety intent");
+    } else if (normalized === "trust/hwai-mcp-stack.trust.json") {
+      score += 140;
+      reasons.push("trust manifest boosted by safety intent");
+    } else if (normalized === "public_release_audit.md") {
+      score += 70;
+      reasons.push("release audit doc boosted by safety intent");
+    } else if (/(^|\/)(trust|verify|preinstall|safety|audit)[^/]*\.(md|json|sh)$/.test(normalized)) {
+      score += 18;
+      reasons.push("safety-like artifact boosted by safety intent");
+    }
+
+    if (/^scripts\/eval-/.test(normalized)) {
+      score -= 36;
+      reasons.push("eval helper deprioritized for installer safety intent");
+    }
+  }
+
+  return { score, reasons };
 }
 
 function quotedPhrases(query: string): string[] {
@@ -569,6 +653,9 @@ function pathScore(relativePath: string, terms: string[], intent: TaskIntent): {
 
   for (const term of terms) {
     const lower = term.toLowerCase();
+    if (GENERIC_PATH_MATCH_STOP_WORDS.has(lower)) {
+      continue;
+    }
     if (base.includes(lower)) {
       score += 12;
       reasons.push(`filename contains "${term}"`);
@@ -603,6 +690,10 @@ function pathScore(relativePath: string, terms: string[], intent: TaskIntent): {
       }
     }
   }
+
+  const installerSafetyBoost = installerSafetyPathScore(relativePath, terms);
+  score += installerSafetyBoost.score;
+  reasons.push(...installerSafetyBoost.reasons);
 
   return { score, reasons };
 }
