@@ -29,7 +29,6 @@ V0_3_BACKLOG.md
 WEEK1_MVP_PLAN.md
 scripts/eval-*.mjs
 scripts/eval-*.sh
-scripts/greg-dogfood-*.sh
 scripts/hwai-mcp-coverage-report.mjs
 scripts/hwai-mcp-full-profile-smoke.mjs
 scripts/local-context-compress.mjs
