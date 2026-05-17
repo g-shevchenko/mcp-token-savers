@@ -95,7 +95,11 @@ export interface ArtifactProfile {
 }
 
 export interface ScreenshotMetadata {
+  source?: string;
+  surface?: string;
+  client_surface?: string;
   page_url?: string;
+  page_route?: string;
   page_title?: string;
   browser?: string;
   os?: string;
@@ -109,14 +113,27 @@ export interface ScreenshotMetadata {
   captured_by?: string;
   device_pixel_ratio?: number;
   reporter_comment?: string;
+  user_role?: string;
+  tenant?: string;
+  locale?: string;
   feature_flags?: string[];
+  active_experiments?: string[];
   labels?: string[];
   console_errors?: string[];
+  network_errors?: string[];
   network_notes?: string[];
   viewport?: {
     width?: number;
     height?: number;
   };
+}
+
+export interface ContextQuality {
+  score: number;
+  rating: "excellent" | "good" | "partial" | "thin";
+  present_fields: string[];
+  missing_fields: string[];
+  recommended_next_capture: string[];
 }
 
 export interface IgnoreRegionInput {
@@ -129,8 +146,48 @@ export interface IgnoreRegionInput {
   reason?: string;
 }
 
+export type RegionPolicyType = "ignore" | "strict" | "layout" | "content";
+
+export interface RegionPolicyInput extends IgnoreRegionInput {
+  policy: RegionPolicyType;
+  id?: string;
+}
+
+export interface NormalizedRegionPolicy extends RegionPolicyInput {
+  id: string;
+}
+
+export interface AnnotationNavItem {
+  id: number;
+  kind: AnnotationRegionType;
+  priority: number;
+  include_by_default: boolean;
+  region: BoundingBox;
+  annotation_crop_url: string;
+  context_crop_url: string;
+  ocr_hint?: string;
+  ocr_confidence?: number | null;
+  why_included: string;
+}
+
+export interface DiffReviewNavItem {
+  id: number;
+  kind: "changed_region";
+  priority: number;
+  include_by_default: boolean;
+  impact: "layout_shift" | "text_change" | "color_change" | "asset_change" | "unknown";
+  region: BoundingBox;
+  before_context_url: string;
+  after_context_url: string;
+  before_crop_url: string;
+  after_crop_url: string;
+  why_included: string;
+}
+
 export interface CompactAnalysisResult {
   schema_version: "vision-mcp.v3";
+  analysis_id: string;
+  status: "ok";
   prep_mode: "screenshot-prep";
   task_intent: {
     applied: ScreenshotTaskIntentName;
@@ -141,6 +198,7 @@ export interface CompactAnalysisResult {
   prepared_for: "native_frontier_vision";
   analysis_scope: "full_frame_plus_annotation_regions";
   input_metadata: ScreenshotMetadata | null;
+  context_quality: ContextQuality;
   artifacts: {
     full_frame: PreparedImageArtifact;
     manifest_url: string;
@@ -149,6 +207,7 @@ export interface CompactAnalysisResult {
   recommended_profile: ArtifactProfile["profile"];
   artifact_profiles: ArtifactProfile[];
   annotation_regions: PreparedAnnotationRegion[];
+  annotation_nav: AnnotationNavItem[];
   detection_summary: {
     red_regions_detected: number;
     ready_for_frontier_vision: boolean;
@@ -187,6 +246,8 @@ export interface DiffArtifactProfile {
 
 export interface CompactDiffResult {
   schema_version: "vision-mcp.v3.diff";
+  analysis_id: string;
+  status: "ok";
   prep_mode: "screenshot-diff-prep";
   review_profile: {
     applied: DiffReviewProfileName;
@@ -200,6 +261,7 @@ export interface CompactDiffResult {
   prepared_for: "native_frontier_vision";
   analysis_scope: "aligned_before_after_plus_changed_regions";
   input_metadata: ScreenshotMetadata | null;
+  context_quality: ContextQuality;
   artifacts: {
     before_full_frame: PreparedImageArtifact;
     after_full_frame: PreparedImageArtifact;
@@ -209,6 +271,8 @@ export interface CompactDiffResult {
   recommended_profile: DiffArtifactProfile["profile"];
   artifact_profiles: DiffArtifactProfile[];
   changed_regions: PreparedChangedRegion[];
+  review_nav: DiffReviewNavItem[];
+  region_policies: NormalizedRegionPolicy[];
   detection_summary: {
     changed_regions_detected: number;
     compare_dimensions: {
@@ -217,6 +281,7 @@ export interface CompactDiffResult {
     };
     ignored_regions_applied: number;
     ignore_presets_applied: IgnorePresetName[];
+    region_policies_applied: number;
     review_profile_applied: DiffReviewProfileName;
     diff_pipeline_version: string;
     optimization_pipeline_version: string;
@@ -288,10 +353,14 @@ function contentLengthFromHeader(raw: string | null): number | null {
 }
 
 async function headImage(url: string): Promise<HeadMetadata> {
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), 5000);
+
   try {
     const response = await fetch(url, {
       method: "HEAD",
       headers: { "User-Agent": USER_AGENT },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -316,13 +385,33 @@ async function headImage(url: string): Promise<HeadMetadata> {
       etag: null,
       lastModified: null,
     };
+  } finally {
+    clearTimeout(timeoutHandle);
   }
 }
 
-async function downloadImage(url: string, maxImageSizeBytes: number): Promise<DownloadedImage> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
+async function downloadImage(
+  url: string,
+  maxImageSizeBytes: number,
+  timeoutMs: number,
+): Promise<DownloadedImage> {
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Timed out after ${timeoutMs}ms while fetching ${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} while fetching ${url}`);
@@ -387,7 +476,11 @@ function normalizeMetadata(metadata: unknown): ScreenshotMetadata | null {
     typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
   const normalized: ScreenshotMetadata = {
+    source: readString("source"),
+    surface: readString("surface"),
+    client_surface: readString("client_surface"),
     page_url: readString("page_url"),
+    page_route: readString("page_route") || readString("route"),
     page_title: readString("page_title"),
     browser: readString("browser"),
     os: readString("os"),
@@ -401,9 +494,14 @@ function normalizeMetadata(metadata: unknown): ScreenshotMetadata | null {
     captured_by: readString("captured_by"),
     device_pixel_ratio: readFiniteNumber(source.device_pixel_ratio),
     reporter_comment: readString("reporter_comment"),
+    user_role: readString("user_role"),
+    tenant: readString("tenant"),
+    locale: readString("locale"),
     feature_flags: readStringArray("feature_flags"),
+    active_experiments: readStringArray("active_experiments"),
     labels: readStringArray("labels"),
     console_errors: readStringArray("console_errors"),
+    network_errors: readStringArray("network_errors"),
     network_notes: readStringArray("network_notes"),
   };
 
@@ -420,6 +518,37 @@ function normalizeMetadata(metadata: unknown): ScreenshotMetadata | null {
   );
 
   return hasValues ? normalized : null;
+}
+
+function contextQuality(metadata: ScreenshotMetadata | null): ContextQuality {
+  const checks: Array<[string, boolean, string]> = [
+    ["page_url", Boolean(metadata?.page_url || metadata?.page_route), "Capture page_url or page_route."],
+    ["viewport", Boolean(metadata?.viewport?.width && metadata?.viewport?.height), "Capture viewport width/height."],
+    ["runtime", Boolean(metadata?.browser || metadata?.os), "Capture browser and OS."],
+    ["environment", Boolean(metadata?.environment), "Capture environment such as local/staging/prod."],
+    ["revision", Boolean(metadata?.build_id || metadata?.commit_sha || metadata?.branch), "Capture build_id, commit_sha, or branch."],
+    ["reporter", Boolean(metadata?.captured_by || metadata?.source || metadata?.surface), "Capture source/surface/reporter."],
+    ["diagnostics", Boolean(metadata?.console_errors?.length || metadata?.network_errors?.length || metadata?.network_notes?.length), "Attach console/network diagnostics when available."],
+    ["flags", Boolean(metadata?.feature_flags?.length || metadata?.active_experiments?.length), "Attach feature flags or active experiments when relevant."],
+  ];
+
+  const present = checks.filter(([, ok]) => ok).map(([name]) => name);
+  const missing = checks.filter(([, ok]) => !ok).map(([name]) => name);
+  const recommended = checks.filter(([, ok]) => !ok).map(([, , recommendation]) => recommendation).slice(0, 4);
+  const score = round(present.length / checks.length);
+  const rating =
+    score >= 0.85 ? "excellent" :
+      score >= 0.62 ? "good" :
+        score >= 0.38 ? "partial" :
+          "thin";
+
+  return {
+    score,
+    rating,
+    present_fields: present,
+    missing_fields: missing,
+    recommended_next_capture: recommended,
+  };
 }
 
 function normalizeIgnoreRegions(input: unknown): IgnoreRegionInput[] {
@@ -462,6 +591,45 @@ function normalizeIgnoreRegions(input: unknown): IgnoreRegionInput[] {
       coordinate_space: coordinateSpace,
       applies_to: appliesTo,
       reason,
+    });
+  }
+
+  return normalized;
+}
+
+function normalizeRegionPolicies(input: unknown): NormalizedRegionPolicy[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  const normalized: NormalizedRegionPolicy[] = [];
+  for (const item of input) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      continue;
+    }
+
+    const source = item as Record<string, unknown>;
+    const base = normalizeIgnoreRegions([item])[0];
+    if (!base) {
+      continue;
+    }
+
+    const policy =
+      source.policy === "ignore" ||
+      source.policy === "strict" ||
+      source.policy === "layout" ||
+      source.policy === "content"
+        ? source.policy
+        : "strict";
+    const id =
+      typeof source.id === "string" && source.id.trim()
+        ? source.id.trim().replace(/[^a-zA-Z0-9_.:-]+/g, "-").slice(0, 80)
+        : `policy-${normalized.length + 1}`;
+
+    normalized.push({
+      ...base,
+      id,
+      policy,
     });
   }
 
@@ -599,8 +767,14 @@ function appendMetadataLines(lines: string[], metadata: ScreenshotMetadata | nul
   }
 
   lines.push("Input metadata:");
+  if (metadata.source || metadata.surface || metadata.client_surface) {
+    lines.push(`- Source surface: ${metadata.surface || metadata.client_surface || metadata.source}`);
+  }
   if (metadata.page_url) {
     lines.push(`- Page URL: ${metadata.page_url}`);
+  }
+  if (metadata.page_route) {
+    lines.push(`- Page route: ${metadata.page_route}`);
   }
   if (metadata.page_title) {
     lines.push(`- Page title: ${metadata.page_title}`);
@@ -635,8 +809,16 @@ function appendMetadataLines(lines: string[], metadata: ScreenshotMetadata | nul
   if (metadata.device_pixel_ratio) {
     lines.push(`- Device pixel ratio: ${metadata.device_pixel_ratio}`);
   }
+  if (metadata.user_role || metadata.tenant || metadata.locale) {
+    lines.push(
+      `- User context: role=${metadata.user_role || "unknown"}, tenant=${metadata.tenant || "unknown"}, locale=${metadata.locale || "unknown"}`,
+    );
+  }
   if (metadata.feature_flags?.length) {
     lines.push(`- Feature flags: ${metadata.feature_flags.join(", ")}`);
+  }
+  if (metadata.active_experiments?.length) {
+    lines.push(`- Active experiments: ${metadata.active_experiments.join(", ")}`);
   }
   if (metadata.labels?.length) {
     lines.push(`- Labels: ${metadata.labels.join(", ")}`);
@@ -646,6 +828,9 @@ function appendMetadataLines(lines: string[], metadata: ScreenshotMetadata | nul
   }
   if (metadata.network_notes?.length) {
     lines.push(`- Network notes: ${metadata.network_notes.join(" | ")}`);
+  }
+  if (metadata.network_errors?.length) {
+    lines.push(`- Network errors: ${metadata.network_errors.join(" | ")}`);
   }
   if (metadata.reporter_comment) {
     lines.push(`- Reporter comment: ${metadata.reporter_comment}`);
@@ -814,6 +999,72 @@ function computeRegionPriority(
   );
 }
 
+function buildAnalysisId(parts: unknown): string {
+  return `va_${sha256Hex(JSON.stringify(parts)).slice(0, 16)}`;
+}
+
+function buildAnnotationNav(regions: PreparedAnnotationRegion[]): AnnotationNavItem[] {
+  return [...regions]
+    .sort((a, b) => {
+      if (b.priority_score !== a.priority_score) {
+        return b.priority_score - a.priority_score;
+      }
+      return a.review_order - b.review_order;
+    })
+    .map((region) => ({
+      id: region.id,
+      kind: region.region_type,
+      priority: region.priority_score,
+      include_by_default: region.include_by_default,
+      region: region.region,
+      annotation_crop_url: region.annotation_crop.url,
+      context_crop_url: region.context_crop.url,
+      ocr_hint: shouldIncludeOcrHint(region.ocr) ? region.ocr!.text : undefined,
+      ocr_confidence: region.ocr?.confidence,
+      why_included: `${region.region_type} priority=${region.priority_score}; review_order=${region.review_order}`,
+    }));
+}
+
+function inferDiffImpact(region: PreparedChangedRegion): DiffReviewNavItem["impact"] {
+  const aspect = region.region.width / Math.max(1, region.region.height);
+  if (region.mean_abs_diff >= 180 && region.changed_pixel_ratio >= 0.55) {
+    return "color_change";
+  }
+  if (region.region.height <= 80 && aspect >= 2.8) {
+    return "text_change";
+  }
+  if (region.coverage_ratio >= 0.015 || region.region.width * region.region.height >= 120000) {
+    return "layout_shift";
+  }
+  if (region.mean_abs_diff >= 130) {
+    return "asset_change";
+  }
+  return "unknown";
+}
+
+function buildDiffReviewNav(regions: PreparedChangedRegion[]): DiffReviewNavItem[] {
+  return [...regions]
+    .sort((a, b) => {
+      if (b.priority_score !== a.priority_score) {
+        return b.priority_score - a.priority_score;
+      }
+      return a.review_order - b.review_order;
+    })
+    .map((region) => ({
+      id: region.id,
+      kind: "changed_region",
+      priority: region.priority_score,
+      include_by_default: region.include_by_default,
+      impact: inferDiffImpact(region),
+      region: region.region,
+      before_context_url: region.before_context_crop.url,
+      after_context_url: region.after_context_crop.url,
+      before_crop_url: region.before_crop.url,
+      after_crop_url: region.after_crop.url,
+      why_included: `changed_pixels=${region.changed_pixel_count}; mean_abs_diff=${region.mean_abs_diff}; priority=${region.priority_score}`,
+    }));
+}
+
 function totalTokenEstimate(images: PreparedImageArtifact[]): ArtifactProfile["estimated_tokens"] {
   return images.reduce(
     (sum, image) => ({
@@ -897,6 +1148,7 @@ function diffPrepCacheKey(
   metadata: ScreenshotMetadata | null,
   ignoreRegions: IgnoreRegionInput[],
   ignorePresetNames: IgnorePresetName[],
+  regionPolicies: NormalizedRegionPolicy[],
   reviewProfileName: DiffReviewProfileName,
 ): string {
   return sha256Hex(
@@ -911,6 +1163,7 @@ function diffPrepCacheKey(
       metadata: metadata || null,
       ignoreRegions,
       ignorePresetNames,
+      regionPolicies,
       reviewProfileName,
       cropPipelineVersion: CROP_PIPELINE_VERSION,
       promptVersion: SCREENSHOT_ANALYSIS_PROMPT_VERSION,
@@ -963,6 +1216,7 @@ function buildDiffPromptScaffold(
   metadata: ScreenshotMetadata | null,
   ignoreRegionsApplied: number,
   ignorePresetNames: IgnorePresetName[],
+  regionPolicies: NormalizedRegionPolicy[],
   reviewProfileName: DiffReviewProfileName,
   reviewProfileGuidance: string,
 ): string {
@@ -997,6 +1251,13 @@ function buildDiffPromptScaffold(
   }
   if (ignoreRegionsApplied > 0) {
     lines.push(`- Ignore masks applied before diff detection: ${ignoreRegionsApplied}`);
+  }
+  if (regionPolicies.length > 0) {
+    lines.push(
+      `- Region policies: ${regionPolicies
+        .map((policy) => `${policy.id}:${policy.policy}:${policy.reason || "no-reason"}`)
+        .join(", ")}`,
+    );
   }
 
   if (regions.length > 0) {
@@ -1094,6 +1355,7 @@ function buildDiffArtifactProfiles(
 }
 
 function buildCompactDiffResult(
+  analysisId: string,
   beforeUrl: string,
   afterUrl: string,
   beforeFullFrame: PreparedImageArtifact,
@@ -1103,8 +1365,10 @@ function buildCompactDiffResult(
   compareWidth: number,
   compareHeight: number,
   metadata: ScreenshotMetadata | null,
+  contextQualityResult: ContextQuality,
   ignoredRegionsApplied: number,
   ignorePresetNames: IgnorePresetName[],
+  regionPolicies: NormalizedRegionPolicy[],
   reviewProfileName: DiffReviewProfileName,
   reviewProfileGuidance: string,
   recommendedProfileOverride?: DiffArtifactProfile["profile"],
@@ -1119,6 +1383,8 @@ function buildCompactDiffResult(
 
   return {
     schema_version: "vision-mcp.v3.diff",
+    analysis_id: analysisId,
+    status: "ok",
     prep_mode: "screenshot-diff-prep",
     review_profile: {
       applied: reviewProfileName,
@@ -1132,6 +1398,7 @@ function buildCompactDiffResult(
     prepared_for: "native_frontier_vision",
     analysis_scope: "aligned_before_after_plus_changed_regions",
     input_metadata: metadata,
+    context_quality: contextQualityResult,
     artifacts: {
       before_full_frame: beforeFullFrame,
       after_full_frame: afterFullFrame,
@@ -1143,6 +1410,8 @@ function buildCompactDiffResult(
     recommended_profile: artifactProfiles.recommendedProfile,
     artifact_profiles: artifactProfiles.profiles,
     changed_regions: changedRegions,
+    review_nav: buildDiffReviewNav(changedRegions),
+    region_policies: regionPolicies,
     detection_summary: {
       changed_regions_detected: changedRegions.length,
       compare_dimensions: {
@@ -1151,6 +1420,7 @@ function buildCompactDiffResult(
       },
       ignored_regions_applied: ignoredRegionsApplied,
       ignore_presets_applied: ignorePresetNames,
+      region_policies_applied: regionPolicies.length,
       review_profile_applied: reviewProfileName,
       diff_pipeline_version: `${CROP_PIPELINE_VERSION}.diff-v1`,
       optimization_pipeline_version: OPTIMIZATION_PIPELINE_VERSION,
@@ -1164,6 +1434,7 @@ function buildCompactDiffResult(
       metadata,
       ignoredRegionsApplied,
       ignorePresetNames,
+      regionPolicies,
       reviewProfileName,
       reviewProfileGuidance,
     ),
@@ -1188,11 +1459,13 @@ function buildCompactDiffResult(
 }
 
 function buildCompactResult(
+  analysisId: string,
   sourceUrl: string,
   fullFrame: PreparedImageArtifact,
   manifestUrl: string,
   annotationRegions: PreparedAnnotationRegion[],
   metadata: ScreenshotMetadata | null,
+  contextQualityResult: ContextQuality,
   taskIntentName: ScreenshotTaskIntentName,
   taskIntentGuidance: string,
   recommendedProfileOverride?: ArtifactProfile["profile"],
@@ -1220,6 +1493,8 @@ function buildCompactResult(
 
   return {
     schema_version: "vision-mcp.v3",
+    analysis_id: analysisId,
+    status: "ok",
     prep_mode: "screenshot-prep",
     task_intent: {
       applied: taskIntentName,
@@ -1230,6 +1505,7 @@ function buildCompactResult(
     prepared_for: "native_frontier_vision",
     analysis_scope: "full_frame_plus_annotation_regions",
     input_metadata: metadata,
+    context_quality: contextQualityResult,
     artifacts: {
       full_frame: fullFrame,
       manifest_url: manifestUrl,
@@ -1240,6 +1516,7 @@ function buildCompactResult(
     recommended_profile: artifactProfiles.recommendedProfile,
     artifact_profiles: artifactProfiles.profiles,
     annotation_regions: annotationRegions,
+    annotation_nav: buildAnnotationNav(annotationRegions),
     detection_summary: {
       red_regions_detected: annotationRegions.length,
       ready_for_frontier_vision: ready,
@@ -1271,8 +1548,8 @@ function buildCompactResult(
           "No red annotation regions were auto-detected. Confirm whether this screenshot should contain visible red markup before implementation.",
         ],
     notes: [
-      "Prep-first mode does not run Ollama or OCR by default.",
-      "OCR now runs only on annotation crops when available; missing OCR is non-fatal.",
+      "Prep-first mode does not run Ollama or local VLM reasoning.",
+      "OCR runs only on a small number of annotation crops when available; missing OCR is non-fatal.",
       "Use the prepared full-frame and crop URLs with the client's native frontier vision path.",
       "JPEG/WebP file size reduction alone does not drive token savings; resized image dimensions do.",
     ],
@@ -1313,6 +1590,8 @@ export async function analyzeScreenshotUrl(
   const headMeta = await headImage(url);
   const binaryKey = imageCacheKey(url, headMeta);
   const analysisKey = prepCacheKey(url, headMeta, context, normalizedMetadata, taskIntent.name);
+  const analysisId = buildAnalysisId({ mode: "screenshot", analysisKey });
+  const contextQualityResult = contextQuality(normalizedMetadata);
 
   const cached = await getJsonCache<AnalyzeUrlResult>(config.cacheDir, analysisKey, config.cacheTtlMs);
   if (cached) {
@@ -1329,7 +1608,11 @@ export async function analyzeScreenshotUrl(
   let effectiveMeta = headMeta;
 
   if (!downloaded) {
-    const fetched = await downloadImage(url, config.maxImageSizeBytes);
+    const fetched = await downloadImage(
+      url,
+      config.maxImageSizeBytes,
+      config.imageFetchTimeoutMs,
+    );
     downloaded = fetched.buffer;
     effectiveMeta = fetched;
     await setBinaryCache(config.cacheDir, binaryKey, downloaded);
@@ -1409,7 +1692,7 @@ export async function analyzeScreenshotUrl(
     );
 
     const ocr =
-      config.ocrEnabled
+      config.ocrEnabled && annotationRegions.length < config.ocrMaxRegions
         ? await runTesseractOcr(annotationPrepared.buffer, {
             timeoutMs: config.ocrTimeoutMs,
             lang: config.ocrLang,
@@ -1464,6 +1747,8 @@ export async function analyzeScreenshotUrl(
     source_url: url,
     prompt_version: SCREENSHOT_ANALYSIS_PROMPT_VERSION,
     input_metadata: normalizedMetadata,
+    context_quality: contextQualityResult,
+    analysis_id: analysisId,
     task_intent: taskIntent.name,
     task_intent_guidance: taskIntent.guidance,
     prepared_full_frame: fullFrameArtifact,
@@ -1487,11 +1772,13 @@ export async function analyzeScreenshotUrl(
   const manifestArtifact = await persistArtifactJson(config, manifestKey, manifestPayload);
 
   const compact = buildCompactResult(
+    analysisId,
     url,
     fullFrameArtifact,
     manifestArtifact.url,
     annotationRegions,
     normalizedMetadata,
+    contextQualityResult,
     taskIntent.name,
     taskIntent.guidance,
     taskIntent.recommendedArtifactProfile,
@@ -1530,6 +1817,7 @@ export async function analyzeScreenshotDiff(
   ignoreRegionsInput?: unknown,
   ignorePresetsInput?: unknown,
   reviewProfileInput?: unknown,
+  regionPoliciesInput?: unknown,
 ): Promise<AnalyzeDiffResult> {
   const beforeUrl = assertAllowedImageUrl(
     rawBeforeUrl,
@@ -1546,9 +1834,12 @@ export async function analyzeScreenshotDiff(
   const { presetNames: ignorePresetNames, regions: presetRegions } = expandIgnorePresets(
     [...reviewProfile.ignorePresets, ...(Array.isArray(ignorePresetsInput) ? ignorePresetsInput : [])],
   );
+  const regionPolicies = normalizeRegionPolicies(regionPoliciesInput);
+  const ignorePolicyRegions = regionPolicies.filter((policy) => policy.policy === "ignore");
   const ignoreRegions = [
     ...presetRegions,
     ...normalizeIgnoreRegions(ignoreRegionsInput),
+    ...ignorePolicyRegions,
   ];
 
   await ensureCacheDir(config.cacheDir);
@@ -1566,8 +1857,11 @@ export async function analyzeScreenshotDiff(
     normalizedMetadata,
     ignoreRegions,
     ignorePresetNames,
+    regionPolicies,
     reviewProfile.name,
   );
+  const analysisId = buildAnalysisId({ mode: "diff", analysisKey, regionPolicies });
+  const contextQualityResult = contextQuality(normalizedMetadata);
   const ignoreHash = ignoreRegions.length
     ? sha256Hex(JSON.stringify(ignoreRegions)).slice(0, 12)
     : "no-ignore";
@@ -1589,14 +1883,22 @@ export async function analyzeScreenshotDiff(
   let effectiveAfterMeta = afterHeadMeta;
 
   if (!beforeDownloaded) {
-    const fetched = await downloadImage(beforeUrl, config.maxImageSizeBytes);
+    const fetched = await downloadImage(
+      beforeUrl,
+      config.maxImageSizeBytes,
+      config.imageFetchTimeoutMs,
+    );
     beforeDownloaded = fetched.buffer;
     effectiveBeforeMeta = fetched;
     await setBinaryCache(config.cacheDir, beforeBinaryKey, beforeDownloaded);
   }
 
   if (!afterDownloaded) {
-    const fetched = await downloadImage(afterUrl, config.maxImageSizeBytes);
+    const fetched = await downloadImage(
+      afterUrl,
+      config.maxImageSizeBytes,
+      config.imageFetchTimeoutMs,
+    );
     afterDownloaded = fetched.buffer;
     effectiveAfterMeta = fetched;
     await setBinaryCache(config.cacheDir, afterBinaryKey, afterDownloaded);
@@ -1849,8 +2151,11 @@ export async function analyzeScreenshotDiff(
     },
     prompt_version: SCREENSHOT_ANALYSIS_PROMPT_VERSION,
     input_metadata: normalizedMetadata,
+    context_quality: contextQualityResult,
+    analysis_id: analysisId,
     ignore_regions: ignoreRegions,
     ignore_presets: ignorePresetNames,
+    region_policies: regionPolicies,
     review_profile: reviewProfile.name,
     review_profile_guidance: reviewProfile.guidance,
     aligned_full_frames: {
@@ -1868,6 +2173,7 @@ export async function analyzeScreenshotDiff(
       },
       ignored_regions_applied: ignoredRegionsApplied,
       ignore_presets_applied: ignorePresetNames,
+      region_policies_applied: regionPolicies.length,
       review_profile_applied: reviewProfile.name,
       diff_pipeline_version: `${CROP_PIPELINE_VERSION}.diff-v1`,
       optimization_pipeline_version: OPTIMIZATION_PIPELINE_VERSION,
@@ -1877,7 +2183,7 @@ export async function analyzeScreenshotDiff(
   const manifestKey = buildCombinedArtifactKey(
     beforeUrl,
     afterUrl,
-    `diff-manifest-${sha256Hex(JSON.stringify({ metadata: normalizedMetadata || null, ignoreRegions, ignorePresetNames, reviewProfile: reviewProfile.name }))}`,
+    `diff-manifest-${sha256Hex(JSON.stringify({ metadata: normalizedMetadata || null, ignoreRegions, ignorePresetNames, regionPolicies, reviewProfile: reviewProfile.name }))}`,
     effectiveBeforeMeta,
     effectiveAfterMeta,
   );
@@ -1885,6 +2191,7 @@ export async function analyzeScreenshotDiff(
   const manifestArtifact = await persistArtifactJson(config, manifestKey, manifestPayload);
 
   const compact = buildCompactDiffResult(
+    analysisId,
     beforeUrl,
     afterUrl,
     beforeFullArtifact,
@@ -1894,8 +2201,10 @@ export async function analyzeScreenshotDiff(
     compareWidth,
     compareHeight,
     normalizedMetadata,
+    contextQualityResult,
     ignoredRegionsApplied,
     ignorePresetNames,
+    regionPolicies,
     reviewProfile.name,
     reviewProfile.guidance,
     reviewProfile.recommendedArtifactProfile,

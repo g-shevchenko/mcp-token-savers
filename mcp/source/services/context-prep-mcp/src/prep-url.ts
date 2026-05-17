@@ -12,6 +12,24 @@ import {
 } from "./scraper-core-client.js";
 
 type ParserStackMode = "auto" | "local" | "scraper_core";
+type FallbackIssueClass =
+  | "none"
+  | "local_http_403"
+  | "local_http_4xx"
+  | "local_http_5xx"
+  | "local_timeout"
+  | "local_js_or_challenge"
+  | "local_low_extraction"
+  | "scraper_core_key_missing"
+  | "scraper_core_disabled"
+  | "scraper_core_http_403"
+  | "scraper_core_http_4xx"
+  | "scraper_core_http_5xx"
+  | "scraper_core_timeout"
+  | "scraper_core_empty"
+  | "scraper_core_weak_extraction"
+  | "scraper_core_failed"
+  | "unknown";
 
 export interface PrepUrlOptions {
   allow_paid_tiers?: boolean;
@@ -39,11 +57,20 @@ export interface PrepUrlResult {
     requested: ParserStackMode;
     used: "local" | "scraper_core";
     fallback_reason?: string;
+    fallback_diagnostics?: {
+      issue_class: FallbackIssueClass;
+      local_issue_class?: FallbackIssueClass;
+      scraper_issue_class?: FallbackIssueClass;
+      scraper_core_configured: boolean;
+      attempted_scraper_core: boolean;
+      recommended_action?: string;
+    };
     scraper_core?: {
       cache_hit?: boolean;
       challenge_detected?: string | null;
       duration_ms?: number;
       engine?: string;
+      extraction_quality?: ScraperCoreFetchResult["extraction_quality"];
       status?: number;
       tiers_tried?: string[];
     };
@@ -67,6 +94,75 @@ export interface PrepUrlResult {
     suggested_action: "use_compact_markdown" | "inspect_cleaned_artifact";
   };
   prompt_scaffold: string;
+}
+
+export function classifyPrepUrlIssue(message: string | undefined, fallbackReason?: string | null): FallbackIssueClass {
+  const text = `${fallbackReason || ""} ${message || ""}`.toLowerCase();
+  const httpStatus = text.match(/http\s+(\d{3})/)?.[1];
+
+  if (/key missing|key is not configured|not configured/.test(text)) {
+    return "scraper_core_key_missing";
+  }
+  if (/fallback is disabled|fallback_disabled/.test(text)) {
+    return "scraper_core_disabled";
+  }
+  if (/likely_js_or_challenge_shell|cloudflare|captcha|turnstile|challenge/.test(text)) {
+    return "local_js_or_challenge";
+  }
+  if (/low_text_extraction_volume/.test(text)) {
+    return "local_low_extraction";
+  }
+  if (/abort|timeout|timed out/.test(text)) {
+    return text.includes("scraper") ? "scraper_core_timeout" : "local_timeout";
+  }
+  if (httpStatus) {
+    const status = Number(httpStatus);
+    const scraper = text.includes("scraper-core") || text.includes("scraper_core");
+    if (status === 403) {
+      return scraper ? "scraper_core_http_403" : "local_http_403";
+    }
+    if (status >= 500) {
+      return scraper ? "scraper_core_http_5xx" : "local_http_5xx";
+    }
+    if (status >= 400) {
+      return scraper ? "scraper_core_http_4xx" : "local_http_4xx";
+    }
+  }
+  if (/scraper_core_weak_extraction|weak_extraction|large_html_tiny_extraction|diagnostic_text_instead_of_content/.test(text)) {
+    return "scraper_core_weak_extraction";
+  }
+  if (/scraper_core_empty_markdown/.test(text)) {
+    return "scraper_core_empty";
+  }
+  if (/scraper_core_failed|scraper-core fallback failed/.test(text)) {
+    return "scraper_core_failed";
+  }
+  return fallbackReason || message ? "unknown" : "none";
+}
+
+function recommendedAction(issueClass: FallbackIssueClass): string | undefined {
+  if (issueClass === "scraper_core_key_missing") {
+    return "Configure CONTEXT_PREP_SCRAPER_KEY or HWAI_SCRAPER_KEY when auto fallback must handle 403, JS challenge, or low-extraction pages.";
+  }
+  if (issueClass === "scraper_core_disabled") {
+    return "Enable scraper-core fallback for this environment or force parser_stack=local when fallback is intentionally unavailable.";
+  }
+  if (issueClass === "local_http_403" || issueClass === "local_js_or_challenge" || issueClass === "local_low_extraction") {
+    return "Use parser_stack=auto with scraper-core configured, or inspect the cleaned artifact before relying on the compact output.";
+  }
+  if (issueClass === "scraper_core_http_403") {
+    return "Check scraper-core authorization, target-domain blocking, and requested max_tier/country before retrying.";
+  }
+  if (issueClass === "scraper_core_timeout" || issueClass === "local_timeout") {
+    return "Retry with a bounded timeout, narrower target, or scraper-core tier/country override.";
+  }
+  if (issueClass === "scraper_core_failed" || issueClass === "scraper_core_http_4xx" || issueClass === "scraper_core_http_5xx") {
+    return "Inspect scraper-core health/config and retry with local parser only if exact page content is not required.";
+  }
+  if (issueClass === "scraper_core_weak_extraction") {
+    return "Inspect the cleaned artifact and scraper-core extraction_quality diagnostics before relying on the compact output.";
+  }
+  return undefined;
 }
 
 async function readLimitedResponse(response: Response, maxBytes: number): Promise<{ text: string; truncated: boolean }> {
@@ -358,6 +454,12 @@ function scraperResultToParts(
   if (!cleanedText) {
     warnings.push("scraper_core_empty_markdown");
   }
+  if (result.extraction_quality && result.extraction_quality.ok === false) {
+    const reasons = Array.isArray(result.extraction_quality.reasons)
+      ? result.extraction_quality.reasons.join(",")
+      : "unknown";
+    warnings.push(`scraper_core_weak_extraction:${reasons}`);
+  }
   if (result.error) {
     warnings.push(`scraper_core_error:${result.error}`);
   }
@@ -415,6 +517,7 @@ export async function prepUrl(
   let localError: Error | null = null;
   let fallbackReason: string | null = parserStack === "scraper_core" ? "forced_scraper_core" : null;
   let scraperResult: ScraperCoreFetchResult | null = null;
+  let scraperError: Error | null = null;
   let usedParser: "local" | "scraper_core" = "local";
 
   if (parserStack !== "scraper_core") {
@@ -459,7 +562,7 @@ export async function prepUrl(
         parts = scraperResultToParts(scraperResult, parsed.toString(), fallbackReason);
         usedParser = "scraper_core";
       } catch (error) {
-        const scraperError = error instanceof Error ? error : new Error(String(error));
+        scraperError = error instanceof Error ? error : new Error(String(error));
         if (!parts && localError) {
           throw new Error(`${localError.message}; scraper-core fallback failed: ${scraperError.message}`);
         }
@@ -490,6 +593,27 @@ export async function prepUrl(
     maxCompactChars,
   );
 
+  const localIssueClass = localError
+    ? classifyPrepUrlIssue(localError.message, fallbackReason)
+    : fallbackReason
+      ? classifyPrepUrlIssue(undefined, fallbackReason)
+      : "none";
+  const scraperIssueClass = !isScraperCoreConfigured(config) && fallbackReason
+    ? "scraper_core_key_missing"
+    : scraperError
+      ? classifyPrepUrlIssue(scraperError.message, "scraper_core_failed")
+      : parts.warnings.some((warning) => warning.startsWith("scraper_core_weak_extraction"))
+        ? "scraper_core_weak_extraction"
+      : parts.warnings.includes("scraper_core_empty_markdown")
+        ? "scraper_core_empty"
+        : "none";
+  const issueClass: FallbackIssueClass =
+    scraperIssueClass !== "none"
+      ? scraperIssueClass
+      : localIssueClass !== "none"
+        ? localIssueClass
+        : "none";
+
   const artifactKey = stableKey("url", `${parts.finalUrl}\n${parts.cleanedText}`);
   const cleanedArtifact = await persistArtifactText(config, artifactKey, "md", parts.cleanedText);
   const manifestArtifact = await persistArtifactJson(config, `${artifactKey}-manifest`, {
@@ -504,12 +628,21 @@ export async function prepUrl(
       requested: parserStack,
       used: usedParser,
       fallback_reason: usedParser === "scraper_core" ? fallbackReason : undefined,
+      fallback_diagnostics: {
+        issue_class: issueClass,
+        local_issue_class: localIssueClass,
+        scraper_issue_class: scraperIssueClass,
+        scraper_core_configured: isScraperCoreConfigured(config),
+        attempted_scraper_core: Boolean(fallbackReason && isScraperCoreConfigured(config)),
+        recommended_action: recommendedAction(issueClass),
+      },
       scraper_core: scraperResult
         ? {
             cache_hit: scraperResult.cache_hit,
             challenge_detected: scraperResult.challenge_detected,
             duration_ms: scraperResult.duration_ms,
             engine: scraperResult.engine,
+            extraction_quality: scraperResult.extraction_quality,
             status: scraperResult.status,
             tiers_tried: scraperResult.tiers_tried,
           }
@@ -527,7 +660,7 @@ export async function prepUrl(
   const reasons = [...parts.warnings];
   const uncertainty =
     parts.warnings.some((warning) =>
-      /low_text_extraction_volume|non_html_content_type|scraper_core_empty_markdown|scraper_core_failed|scraper_core_key_missing|fallback_disabled/.test(
+      /low_text_extraction_volume|non_html_content_type|scraper_core_empty_markdown|scraper_core_weak_extraction|scraper_core_failed|scraper_core_key_missing|fallback_disabled/.test(
         warning,
       ),
     )
@@ -551,12 +684,21 @@ export async function prepUrl(
       requested: parserStack,
       used: usedParser,
       fallback_reason: usedParser === "scraper_core" ? fallbackReason || undefined : undefined,
+      fallback_diagnostics: {
+        issue_class: issueClass,
+        local_issue_class: localIssueClass,
+        scraper_issue_class: scraperIssueClass,
+        scraper_core_configured: isScraperCoreConfigured(config),
+        attempted_scraper_core: Boolean(fallbackReason && isScraperCoreConfigured(config)),
+        recommended_action: recommendedAction(issueClass),
+      },
       scraper_core: scraperResult
         ? {
             cache_hit: scraperResult.cache_hit,
             challenge_detected: scraperResult.challenge_detected,
             duration_ms: scraperResult.duration_ms,
             engine: scraperResult.engine,
+            extraction_quality: scraperResult.extraction_quality,
             status: scraperResult.status,
             tiers_tried: scraperResult.tiers_tried,
           }

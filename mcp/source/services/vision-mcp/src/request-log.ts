@@ -5,9 +5,11 @@ import { VisionRuntimeConfig } from "./config.js";
 export interface VisionRequestLogEvent {
   duration_ms: number;
   error?: string;
+  error_code?: string;
   input?: Record<string, unknown>;
   ok: boolean;
   output?: Record<string, unknown>;
+  request_id?: string;
   tool: string;
   transport: "mcp" | "http";
 }

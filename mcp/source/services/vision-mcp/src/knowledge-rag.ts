@@ -60,7 +60,7 @@ export async function findRelevantGotchas(
   try {
     // Resolve path relative to this file
     const kbPath = path.resolve(__dirname, knowledgeBasePath);
-
+    
     if (!fs.existsSync(kbPath)) {
       console.error(`[RAG] Knowledge base not found: ${kbPath}`);
       return { gotchas, relevantSections, warnings };
@@ -75,7 +75,7 @@ export async function findRelevantGotchas(
     // Search in content
     for (const term of searchTerms) {
       const matches = findMatches(content, term);
-
+      
       for (const match of matches.slice(0, 3)) { // Top 3 matches per term
         const gotcha = extractGotcha(content, match, term);
         if (gotcha && !gotchas.find(g => g.title === gotcha.title)) {
@@ -139,7 +139,7 @@ function buildSearchTerms(elementType: string, commentText: string): string[] {
 function findMatches(content: string, term: string): Array<{ line: number; context: string }> {
   const lines = content.split("\n");
   const matches: Array<{ line: number; context: string }> = [];
-
+  
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].toLowerCase().includes(term.toLowerCase())) {
       // Get context (3 lines before and after)
@@ -149,7 +149,7 @@ function findMatches(content: string, term: string): Array<{ line: number; conte
       matches.push({ line: i + 1, context });
     }
   }
-
+  
   return matches;
 }
 
@@ -163,7 +163,7 @@ function extractGotcha(
 ): Gotcha | null {
   // Simple extraction — look for headers and bullet points
   const lines = match.context.split("\n");
-
+  
   let title = "";
   let description = "";
   let category = "general";

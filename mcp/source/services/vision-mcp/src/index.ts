@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -17,7 +18,11 @@ import {
   AnalyzeDiffResult,
   AnalyzeUrlResult,
 } from "./analysis-pipeline.js";
-import { getVisionConfig, SCREENSHOT_ANALYSIS_PROMPT_VERSION } from "./config.js";
+import {
+  CROP_PIPELINE_VERSION,
+  getVisionConfig,
+  SCREENSHOT_ANALYSIS_PROMPT_VERSION,
+} from "./config.js";
 import { listIgnorePresetNames } from "./ignore-presets.js";
 import { listDiffReviewProfileNames } from "./diff-review-profiles.js";
 import { listScreenshotTaskIntentNames } from "./screenshot-task-intents.js";
@@ -36,7 +41,21 @@ const SCREENSHOT_METADATA_SCHEMA = {
   description:
     "Optional sidecar metadata captured at report time. Use this to preserve page/browser context without sending extra free-form prompt text.",
   properties: {
+    source: { type: "string" },
+    surface: {
+      type: "string",
+      description: "Agent/client surface label for measurement only, for example claude, codex, cursor, or windsurf.",
+    },
+    client_surface: {
+      type: "string",
+      description: "Backward-compatible alias for surface.",
+    },
+    traffic_class: {
+      type: "string",
+      description: "Optional traffic attribution for measurement. Use production_like for real workflows and proof/benchmark/smoke for eval traffic.",
+    },
     page_url: { type: "string" },
+    page_route: { type: "string" },
     page_title: { type: "string" },
     browser: { type: "string" },
     os: { type: "string" },
@@ -44,26 +63,20 @@ const SCREENSHOT_METADATA_SCHEMA = {
     timestamp: { type: "string" },
     session_id: { type: "string" },
     report_id: { type: "string" },
-    source: { type: "string" },
-    surface: {
-      type: "string",
-      description: "Agent/client surface label for measurement only, for example claude, codex, cursor, or windsurf.",
-    },
-    traffic_class: {
-      type: "string",
-      description: "Optional traffic attribution for measurement. Use production_like for real workflows and proof/benchmark/smoke for eval traffic.",
-    },
-    client_surface: {
-      type: "string",
-      description: "Backward-compatible alias for surface.",
-    },
     build_id: { type: "string" },
     branch: { type: "string" },
     commit_sha: { type: "string" },
     captured_by: { type: "string" },
     device_pixel_ratio: { type: "number" },
     reporter_comment: { type: "string" },
+    user_role: { type: "string" },
+    tenant: { type: "string" },
+    locale: { type: "string" },
     feature_flags: {
+      type: "array",
+      items: { type: "string" },
+    },
+    active_experiments: {
       type: "array",
       items: { type: "string" },
     },
@@ -72,6 +85,10 @@ const SCREENSHOT_METADATA_SCHEMA = {
       items: { type: "string" },
     },
     console_errors: {
+      type: "array",
+      items: { type: "string" },
+    },
+    network_errors: {
       type: "array",
       items: { type: "string" },
     },
@@ -115,6 +132,36 @@ const IGNORE_REGIONS_SCHEMA = {
   },
 };
 
+const REGION_POLICIES_SCHEMA = {
+  type: "array",
+  description:
+    "Optional Applitools-style region policy rectangles. `ignore` regions are suppressed before diff detection; `strict`, `layout`, and `content` regions are carried into artifacts/prompt scaffolds for downstream review policy.",
+  items: {
+    type: "object",
+    properties: {
+      id: { type: "string" },
+      policy: {
+        type: "string",
+        enum: ["ignore", "strict", "layout", "content"],
+      },
+      x: { type: "number" },
+      y: { type: "number" },
+      width: { type: "number" },
+      height: { type: "number" },
+      coordinate_space: {
+        type: "string",
+        enum: ["pixels", "normalized"],
+      },
+      applies_to: {
+        type: "string",
+        enum: ["before", "after", "both"],
+      },
+      reason: { type: "string" },
+    },
+    required: ["policy", "x", "y", "width", "height"],
+  },
+};
+
 const IGNORE_PRESETS_SCHEMA = {
   type: "array",
   description:
@@ -139,6 +186,17 @@ const TASK_INTENT_SCHEMA = {
   enum: TASK_INTENT_NAMES,
 };
 
+const RUNTIME_DIAGNOSTICS_TOOL: Tool = {
+  name: "get_runtime_diagnostics",
+  description:
+    "Return metadata-only runtime diagnostics for vision-mcp configuration. " +
+    "Use when screenshot/image URL prep fails because of URL allowlist, size, timeout, or env drift.",
+  inputSchema: {
+    type: "object",
+    properties: {},
+  },
+};
+
 // Tool definitions
 const FETCH_IMAGE_TOOL: Tool = {
   name: "fetch_image",
@@ -151,7 +209,7 @@ const FETCH_IMAGE_TOOL: Tool = {
     properties: {
       url: {
         type: "string",
-        description: "The URL of the image to fetch (for example, https://example.com/screenshots/sample.png)",
+        description: "The URL of the image to fetch (e.g., https://cdn.hwai-ops.xyz/screenshots/...)",
       },
       maxSize: {
         type: "number",
@@ -175,7 +233,7 @@ const ANALYZE_SCREENSHOT_TOOL: Tool = {
     properties: {
       url: {
         type: "string",
-        description: "Screenshot URL (for example, https://example.com/screenshots/sample.png)",
+        description: "Screenshot URL (e.g., https://cdn.hwai-ops.xyz/screenshots/...)",
       },
       context: {
         type: "string",
@@ -267,6 +325,7 @@ const ANALYZE_SCREENSHOT_DIFF_TOOL: Tool = {
       metadata: SCREENSHOT_METADATA_SCHEMA,
       ignore_regions: IGNORE_REGIONS_SCHEMA,
       ignore_presets: IGNORE_PRESETS_SCHEMA,
+      region_policies: REGION_POLICIES_SCHEMA,
       review_profile: DIFF_REVIEW_PROFILE_SCHEMA,
       verbose: {
         type: "boolean",
@@ -471,6 +530,7 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
       context_chars: typeof args.context === "string" ? args.context.length : 0,
       ignore_regions_count: Array.isArray(args.ignore_regions) ? args.ignore_regions.length : 0,
       ignore_presets: Array.isArray(args.ignore_presets) ? args.ignore_presets.slice(0, 12) : [],
+      region_policies_count: Array.isArray(args.region_policies) ? args.region_policies.length : 0,
       review_profile: args.review_profile,
       verbose: Boolean(args.verbose),
       metadata_source: source,
@@ -481,16 +541,10 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
   }
 
   if (tool === "fetch_image" || tool === "image_url_to_text") {
-    const source = metadataSource(args);
-    const surface = metadataSurface(args);
     return {
       ...safeUrlSummary(args.url),
       context_chars: typeof args.context === "string" ? args.context.length : 0,
       max_size: args.maxSize,
-      metadata_source: source,
-      metadata_surface: surface,
-      traffic_class: trafficClass(args, source, surface, tool),
-      metadata_keys: args.metadata && typeof args.metadata === "object" ? Object.keys(args.metadata).slice(0, 20) : [],
     };
   }
 
@@ -525,11 +579,19 @@ function tokenBudgetForCompact(record: any): {
 function summarizeCompactOutput(record: any): Record<string, unknown> {
   const tokenBudget = tokenBudgetForCompact(record);
   return {
+    analysis_id: record?.analysis_id,
+    status: record?.status,
     prep_mode: record?.prep_mode,
     recommended_profile: record?.recommended_profile,
     image_urls_for_model_count: Array.isArray(record?.image_urls_for_model) ? record.image_urls_for_model.length : 0,
     annotation_regions_count: Array.isArray(record?.annotation_regions) ? record.annotation_regions.length : undefined,
     changed_regions_count: Array.isArray(record?.changed_regions) ? record.changed_regions.length : undefined,
+    annotation_nav_count: Array.isArray(record?.annotation_nav) ? record.annotation_nav.length : undefined,
+    review_nav_count: Array.isArray(record?.review_nav) ? record.review_nav.length : undefined,
+    region_policies_count: Array.isArray(record?.region_policies) ? record.region_policies.length : undefined,
+    context_quality_rating: record?.context_quality?.rating,
+    context_quality_score: record?.context_quality?.score,
+    error_code: record?.error_code,
     uncertainty: record?.confidence?.uncertainty,
     requires_clarification: record?.autopilot?.requires_clarification,
     ...tokenBudget,
@@ -549,7 +611,12 @@ function summarizeOutput(result: unknown): Record<string, unknown> {
   if (record.compact && Array.isArray(record.compact.results)) {
     const summaries = record.compact.results.map((item: unknown) => summarizeCompactOutput(item));
     return {
+      schema_version: record.compact.schema_version,
+      batch_id: record.compact.batch_id,
+      status: record.compact.status,
       total_images: record.compact.total_images,
+      ok_images: record.compact.ok_images,
+      failed_images: record.compact.failed_images,
       total_annotation_regions: record.compact.total_annotation_regions,
       total_time_ms: record.compact.total_time_ms,
       compact_tokens_estimate: summaries.reduce((sum: number, item: any) => sum + Number(item.compact_tokens_estimate || 0), 0),
@@ -569,6 +636,135 @@ function summarizeOutput(result: unknown): Record<string, unknown> {
   return summarizeCompactOutput(record);
 }
 
+function classifyError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  if (lower.includes("timed out") || lower.includes("timeout") || lower.includes("abort")) {
+    return "fetch_timeout";
+  }
+  if (lower.includes("not allowed") || lower.includes("allowed hosts")) {
+    return "url_not_allowed";
+  }
+  if (lower.includes("econnrefused") || lower.includes("connect refused")) {
+    return "connection_refused";
+  }
+  if (lower.includes("exceeds maximum") || lower.includes("image size")) {
+    return "image_too_large";
+  }
+  if (lower.includes("http error") || /status:\s*[45]\d\d/.test(lower)) {
+    return "remote_http_error";
+  }
+  if (lower.includes("unsupported") || lower.includes("invalid")) {
+    return "invalid_input";
+  }
+  return "unknown_error";
+}
+
+function runtimeDiagnostics(): Record<string, unknown> {
+  const defaultHwaiCdnAllowed = config.allowedHosts
+    .map((host) => host.toLowerCase())
+    .includes("cdn.hwai-ops.xyz");
+  const warnings: string[] = [];
+  const recommendedActions: string[] = [];
+
+  if (!config.allowAnyImageUrl && !defaultHwaiCdnAllowed) {
+    warnings.push("hwai_cdn_not_allowed");
+    recommendedActions.push(
+      "Include cdn.hwai-ops.xyz in VISION_ALLOWED_HOSTS when using HWAI screenshot URLs, or remove an overly narrow env override.",
+    );
+  }
+
+  if (config.allowAnyImageUrl) {
+    warnings.push("allow_any_image_url_enabled");
+    recommendedActions.push("Prefer a narrow VISION_ALLOWED_HOSTS allowlist for routine agent workflows.");
+  }
+
+  return {
+    schema_version: "vision-runtime-diagnostics.v1",
+    service: "vision-mcp",
+    ok: warnings.length === 0,
+    url_policy: {
+      allow_any_image_url: config.allowAnyImageUrl,
+      allowed_hosts: config.allowedHosts,
+      hwai_cdn_allowed: defaultHwaiCdnAllowed,
+    },
+    limits: {
+      max_image_size_bytes: config.maxImageSizeBytes,
+      image_fetch_timeout_ms: config.imageFetchTimeoutMs,
+      batch_max_images: config.batchMaxImages,
+      batch_concurrency: config.batchConcurrency,
+    },
+    warnings,
+    recommended_actions: recommendedActions,
+    data_policy: {
+      includes_secret_values: false,
+      includes_raw_image_urls: false,
+      includes_artifact_urls: false,
+    },
+  };
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workerCount = Math.max(1, Math.min(concurrency, items.length));
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < items.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        results[index] = await worker(items[index], index);
+      }
+    }),
+  );
+
+  return results;
+}
+
+function buildBatchErrorCompact(url: string, errorMessage: string, errorCode: string): Record<string, unknown> {
+  return {
+    schema_version: "vision-mcp.v3.error",
+    analysis_id: `ve_${randomUUID()}`,
+    status: "error",
+    error_code: errorCode,
+    prep_mode: "screenshot-prep-error",
+    source_url: url,
+    prepared_for: "native_frontier_vision",
+    analysis_scope: "error",
+    image_urls_for_model: [],
+    recommended_profile: "anthropic_fast",
+    artifact_profiles: [],
+    annotation_regions: [],
+    detection_summary: {
+      red_regions_detected: 0,
+      ready_for_frontier_vision: false,
+      crop_pipeline_version: CROP_PIPELINE_VERSION,
+    },
+    confidence: {
+      overall: 0,
+      uncertainty: 1,
+      clarification_threshold: 0.03,
+    },
+    autopilot: {
+      requires_clarification: true,
+      suggested_action: "ask_user_to_confirm_missing_annotations",
+      reason: "batch_item_error",
+    },
+    needs_review: true,
+    next_questions: [
+      "This screenshot could not be prepared. Retry this URL separately after checking URL reachability.",
+    ],
+    notes: [
+      `Batch item failed without aborting the whole batch: ${errorMessage}`,
+    ],
+  };
+}
+
 async function audited<T>(
   tool: string,
   transport: "mcp" | "http",
@@ -576,11 +772,13 @@ async function audited<T>(
   run: () => Promise<T>,
 ): Promise<T> {
   const started = Date.now();
+  const requestId = randomUUID();
   try {
     const result = await run();
     await appendRequestLog(config, {
       tool,
       transport,
+      request_id: requestId,
       ok: true,
       duration_ms: Date.now() - started,
       input: summarizeInput(tool, args),
@@ -591,7 +789,9 @@ async function audited<T>(
     await appendRequestLog(config, {
       tool,
       transport,
+      request_id: requestId,
       ok: false,
+      error_code: classifyError(error),
       duration_ms: Date.now() - started,
       input: summarizeInput(tool, args),
       error: error instanceof Error ? error.message : String(error),
@@ -605,9 +805,23 @@ async function fetchImageBuffer(url: string, maxSize: number): Promise<{
   contentType: string;
   size: number;
 }> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), config.imageFetchTimeoutMs);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Timed out after ${config.imageFetchTimeoutMs}ms while fetching ${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -661,12 +875,20 @@ function createVisionServer(): Server {
         BATCH_PREPARE_TOOL,
         ANALYZE_SCREENSHOT_DIFF_TOOL,
         PREPARE_SCREENSHOT_DIFF_TOOL,
+        RUNTIME_DIAGNOSTICS_TOOL,
       ],
     };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+
+    if (name === "get_runtime_diagnostics") {
+      const result = await audited(name, "mcp", args as Record<string, unknown> | undefined, async () =>
+        runtimeDiagnostics(),
+      );
+      return { content: [{ type: "text" as const, text: stringifyResult(result) }] };
+    }
 
     if (name === "analyze_screenshot" || name === "prepare_screenshot") {
       const url = args?.url as string;
@@ -714,23 +936,61 @@ function createVisionServer(): Server {
         return toolError("Error: No URLs provided");
       }
 
+      if (urls.length > config.batchMaxImages) {
+        return toolError(
+          `Error: batch contains ${urls.length} images, but this vision-mcp instance allows ${config.batchMaxImages}. ` +
+            "Split large screenshot sets into smaller batches so the MCP client does not hit its transport timeout.",
+        );
+      }
+
       try {
         const { compact, results } = await audited(name, "mcp", recordArgs, async () => {
           const start = Date.now();
-          const batchResults: AnalyzeUrlResult[] = [];
+          const batchId = `vb_${randomUUID()}`;
+          const batchResults = await mapWithConcurrency(
+            urls,
+            config.batchConcurrency,
+            async (url) => {
+              try {
+                return await analyzeScreenshotUrl(url, context, config, metadata, taskIntent);
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                return {
+                  compact: buildBatchErrorCompact(url, message, classifyError(error)),
+                  verbose: {
+                    cache_hit: false,
+                    analysis_cache_key: "",
+                    image_cache_key: "",
+                    artifact_keys: [],
+                    prompt_version: SCREENSHOT_ANALYSIS_PROMPT_VERSION,
+                    error: message,
+                  },
+                };
+              }
+            },
+          );
 
-          for (const url of urls) {
-            batchResults.push(await analyzeScreenshotUrl(url, context, config, metadata, taskIntent));
-          }
-
+          const failedImages = batchResults.filter(
+            (item) => (item.compact as any).schema_version === "vision-mcp.v3.error",
+          ).length;
           return {
             results: batchResults,
             compact: {
+              schema_version: "vision-mcp.v3.batch",
+              batch_id: batchId,
+              status: failedImages > 0 ? "partial_error" : "ok",
               total_images: batchResults.length,
+              ok_images: batchResults.length - failedImages,
               total_annotation_regions: batchResults.reduce(
-                (sum, item) => sum + item.compact.annotation_regions.length,
+                (sum, item) =>
+                  sum + (Array.isArray((item.compact as any).annotation_regions)
+                    ? (item.compact as any).annotation_regions.length
+                    : 0),
                 0,
               ),
+              failed_images: failedImages,
+              batch_concurrency: config.batchConcurrency,
+              batch_max_images: config.batchMaxImages,
               total_time_ms: Date.now() - start,
               results: batchResults.map((item) => item.compact),
             },
@@ -767,6 +1027,7 @@ function createVisionServer(): Server {
       const metadata = args?.metadata;
       const ignoreRegions = args?.ignore_regions;
       const ignorePresets = args?.ignore_presets;
+      const regionPolicies = args?.region_policies;
       const reviewProfile = args?.review_profile;
       const verbose = Boolean(args?.verbose);
       const recordArgs = args as Record<string, unknown> | undefined;
@@ -786,6 +1047,7 @@ function createVisionServer(): Server {
             ignoreRegions,
             ignorePresets,
             reviewProfile,
+            regionPolicies,
           ),
         );
         const content = [
@@ -976,6 +1238,7 @@ async function startHttpServer(): Promise<void> {
           transport_mode: "http",
           prep_mode: "screenshot-prep",
           prompt_version: SCREENSHOT_ANALYSIS_PROMPT_VERSION,
+          diagnostics: runtimeDiagnostics(),
         });
         return;
       }

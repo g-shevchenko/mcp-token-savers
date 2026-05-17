@@ -18,6 +18,16 @@ export interface ScraperCoreFetchResult {
   duration_ms?: number;
   engine?: string;
   error?: string | null;
+  extraction_quality?: {
+    ok?: boolean;
+    score?: number;
+    reasons?: string[];
+    html_chars?: number;
+    markdown_chars?: number;
+    text_chars?: number;
+    word_count?: number;
+    headings_count?: number;
+  } | null;
   final_url?: string;
   html?: string;
   jsonld?: unknown[];
@@ -90,6 +100,7 @@ export async function fetchWithScraperCore(
       body: JSON.stringify({
         url,
         extract_markdown: true,
+        use_firstparty: false,
         max_tier: resolveMaxTier(config, options),
         bypass_cache: false,
         timeout_seconds: Math.ceil(config.scraperTimeoutMs / 1000),

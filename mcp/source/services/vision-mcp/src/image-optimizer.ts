@@ -63,7 +63,7 @@ export async function optimizeForVLM(
   let pipeline = sharp(imageBuffer);
 
   // Resize if dimensions exceed limits
-  const needsResize =
+  const needsResize = 
     (originalDimensions.width > opts.maxWidth) ||
     (originalDimensions.height > opts.maxHeight);
 
