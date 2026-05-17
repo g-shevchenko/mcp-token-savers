@@ -1330,7 +1330,7 @@ function selectCompactDefinitions(
   return (narrowed.length > 0 ? narrowed : symbols.definitions).slice(0, 6);
 }
 
-function confidence(files: FileScore[], snippets: Snippet[]): { uncertainty: number; reasons: string[] } {
+export function confidence(files: FileScore[], snippets: Snippet[]): { uncertainty: number; reasons: string[] } {
   if (snippets.length === 0) {
     return {
       uncertainty: 0.42,
@@ -1341,13 +1341,19 @@ function confidence(files: FileScore[], snippets: Snippet[]): { uncertainty: num
   const topScore = files[0]?.score || 0;
   const scoreGap = topScore - (files[1]?.score || 0);
   const reasons: string[] = [];
-  let uncertainty = 0.08;
+  // Score thresholds (60/25/8/3) are unchanged (proven against the
+  // pathScore/installerSafety scale). Only the uncertainty arithmetic is
+  // recalibrated: every consumer gates at `> 0.03` (retrieval.ts:1529/1538,
+  // CLAUDE.md ×5, .claude/rules/retrieval-auto.md) and CLAUDE.md has a
+  // `<= 0.03` "confident" branch — so a strong, unambiguous, well-covered
+  // result MUST be able to reach <= 0.03 or the signal is constant-true.
+  let uncertainty = 0.05;
 
   if (topScore >= 60) {
-    uncertainty -= 0.03;
+    uncertainty -= 0.04;
     reasons.push("strong top match");
   } else if (topScore < 25) {
-    uncertainty += 0.12;
+    uncertainty += 0.13;
     reasons.push("weak top match");
   }
 
@@ -1357,7 +1363,7 @@ function confidence(files: FileScore[], snippets: Snippet[]): { uncertainty: num
   }
 
   if (snippets.length < 3) {
-    uncertainty += 0.05;
+    uncertainty += 0.06;
     reasons.push("few snippets returned");
   }
 
@@ -1588,7 +1594,11 @@ export async function findFiles(
       raw_search_file: rawArtifact.fileName,
     },
     confidence: {
-      uncertainty: ranked.length > 0 ? 0.04 : 0.35,
+      // Coherent with confidence(): the coarse find_files tool, when it
+      // returns candidates, must not sit permanently above the `> 0.03`
+      // consumer gate. 0.03 (not > 0.03) = "found, but coarser tool" —
+      // the least-confident "confident". No candidates stays clearly high.
+      uncertainty: ranked.length > 0 ? 0.03 : 0.35,
       reasons: ranked.length > 0 ? ["file candidates found"] : ["no file candidates found"],
     },
     metadata: options.metadata,

@@ -10,6 +10,7 @@
     "start:http": "node dist/index.js --http",
     "dev": "tsc --watch",
     "smoke": "bash ./scripts/smoke-local.sh",
+    "test": "npm run build && node --test scripts/confidence.golden.test.mjs",
     "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
     "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",
     "trace:candidates": "npm run build && node ./scripts/trace-to-benchmark.mjs",
