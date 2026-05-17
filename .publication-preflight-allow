@@ -1,0 +1,3 @@
+# publication_preflight allowlist — auditable, per-check per-path. Each suppression is printed by the scanner.
+# Format: <path-glob> <check> <reason>
+mcp/source/services/docs-sync-mcp/src/docs-sync.ts placeholder functional marker-detector regex/classifier literal: the docs-sync MCP exists to DETECT TODO/FIXME, so its own source must contain the pattern; not a leftover placeholder.

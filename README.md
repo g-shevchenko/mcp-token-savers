@@ -66,8 +66,8 @@ Fast local-first install after inspection:
 For repeatable installs, prefer a release tag or commit SHA instead of `main`:
 
 ```bash
-HWAI_MCP_BRANCH=v0.1.0 \
-/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/v0.1.0/install.sh)"
+HWAI_MCP_BRANCH=76540dcfbcd12284fc2b783d22c5c091624eaf82 \
+/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/76540dcfbcd12284fc2b783d22c5c091624eaf82/install.sh)"
 ```
 
 Install all 17 local MCP servers:

@@ -33,12 +33,12 @@ bash install.sh --dry-run
 For repeatable use, prefer a release tag or a commit SHA:
 
 ```bash
-HWAI_MCP_BRANCH=v0.1.0 \
-/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/v0.1.0/install.sh)"
+HWAI_MCP_BRANCH=76540dcfbcd12284fc2b783d22c5c091624eaf82 \
+/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/76540dcfbcd12284fc2b783d22c5c091624eaf82/install.sh)"
 ```
 
-For the strongest review, clone the tag first, run the checks, then execute the
-local `./install.sh`.
+For the strongest review, clone the pinned commit first, run the checks, then
+execute the local `./install.sh`.
 
 ## Decision Rule For Agents
 
