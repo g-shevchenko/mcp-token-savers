@@ -224,6 +224,36 @@ wording to use in public materials.
 - [Public release audit](./PUBLIC_RELEASE_AUDIT.md)
 - [Security policy](./SECURITY.md)
 
+## Daily Readiness Collector (Local launchd)
+
+The optional daily measurement-readiness aggregator runs from a launchd
+LaunchAgent. macOS TCC blocks launchd-spawned processes from reading
+`~/Documents`, so running the aggregator directly from a clone under
+`~/Documents` fails with `Operation not permitted` and silently stops
+producing reports.
+
+Install a standalone, TCC-safe copy into a non-protected directory instead:
+
+```bash
+# from an interactive shell (it has Documents access)
+bash scripts/install-token-efficiency-collector.sh
+# verify the install is byte-identical to the repo source closure
+bash scripts/install-token-efficiency-collector.sh --check
+```
+
+This copies the builtins-only aggregator closure (no extra runtime deps)
+into `~/.hwai/token-efficiency-collector/`, preserving the relative
+`scripts/` + `mcp/source/scripts/` + `mcp/manifest.json` layout the
+scripts expect. Point the LaunchAgent's `ProgramArguments` at
+`~/.hwai/token-efficiency-collector/scripts/greg-dogfood-catchup.sh`
+and add an `EnvironmentVariables` `PATH` (launchd's minimal `PATH` does
+not include `/usr/local/bin`, so `node` would otherwise not be found).
+Re-run `--check` after pulling updates to detect a stale install.
+
+A custom MCP scope manifest can be passed with
+`--manifest=/abs/path/to/manifest.json` (default: this repo's
+`mcp/manifest.json`).
+
 ## Roadmap
 
 - Improve local context compression for logs, specs, traces, and screenshots.

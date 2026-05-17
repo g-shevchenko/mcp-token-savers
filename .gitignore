@@ -10,6 +10,12 @@ dist/
 coverage/
 evals/local-runs/
 
+# Defensive: the private internal MCP scope manifest lives ONLY in the
+# monorepo. It must never be committed to this public repo even if it is
+# ever copied here by mistake.
+mcp-scope.internal.json
+**/mcp-scope.internal.json
+
 # Local dogfood, internal measurement, and benchmark drafts are kept out of the
 # public installable stack.
 evals/
