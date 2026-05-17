@@ -25,8 +25,31 @@ trap cleanup EXIT
 
 need node
 need npm
-need rg
 need curl
+
+# Resolve rg the SAME way the runtime does (src/command-utils.ts
+# resolveLocalCommand). There may be no `rg` on PATH (e.g. only the
+# Codex-bundled binary, or Claude Code's shell-function wrapper which a
+# child bash can't inherit) — the runtime/e2e still work via an explicit
+# path. Mirror that resolution list as the single source of truth and
+# export RETRIEVAL_RG_PATH so the spawned node e2e uses the same binary.
+if [[ -z "${RETRIEVAL_RG_PATH:-}" ]]; then
+  for _rg in \
+    "/Applications/Codex.app/Contents/Resources/rg" \
+    "/opt/homebrew/bin/rg" "/usr/local/bin/rg" "/usr/bin/rg" \
+    "$SERVICE_DIR/node_modules/.bin/rg"; do
+    if [[ -x "$_rg" ]]; then RETRIEVAL_RG_PATH="$_rg"; break; fi
+  done
+  if [[ -z "${RETRIEVAL_RG_PATH:-}" ]] && command -v rg >/dev/null 2>&1; then
+    RETRIEVAL_RG_PATH="$(command -v rg)"
+  fi
+fi
+if [[ -z "${RETRIEVAL_RG_PATH:-}" ]]; then
+  echo "Missing required command: rg (set RETRIEVAL_RG_PATH or install ripgrep)" >&2
+  exit 1
+fi
+export RETRIEVAL_RG_PATH
+echo "[e2e] rg => $RETRIEVAL_RG_PATH"
 
 cd "$SERVICE_DIR"
 if [[ -f package-lock.json ]]; then
