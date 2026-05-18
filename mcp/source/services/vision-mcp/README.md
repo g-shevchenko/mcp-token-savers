@@ -51,6 +51,19 @@ VISION_ALLOWED_HOSTS=example.com,your-screenshot-cdn.example
 Use `ALLOW_ANY_IMAGE_URL=1` only for trusted local debugging; it disables the
 host allowlist.
 
+## Performance
+
+`prepare_screenshot` is prep-first: the frontier model reads the prepared
+full-frame and crops directly. The optional Tesseract OCR pass only adds a
+discarded text *hint* and defaults to English (`eng`), so on non-English or
+dense screenshots it spends time producing low-confidence output the
+prep-first flow never uses. Unless you specifically consume the OCR hint,
+disable it for noticeably faster, cheaper prep:
+
+```bash
+VISION_MCP_ENABLE_OCR=0
+```
+
 ## Privacy
 
 The MCP stores local artifacts under `~/.hwai/vision-mcp` by default.
