@@ -209,7 +209,7 @@ const FETCH_IMAGE_TOOL: Tool = {
     properties: {
       url: {
         type: "string",
-        description: "The URL of the image to fetch (e.g., https://cdn.hwai-ops.xyz/screenshots/...)",
+        description: "The URL of the image to fetch (e.g., https://your-screenshot-cdn.example/screenshots/...)",
       },
       maxSize: {
         type: "number",
@@ -233,7 +233,7 @@ const ANALYZE_SCREENSHOT_TOOL: Tool = {
     properties: {
       url: {
         type: "string",
-        description: "Screenshot URL (e.g., https://cdn.hwai-ops.xyz/screenshots/...)",
+        description: "Screenshot URL (e.g., https://your-screenshot-cdn.example/screenshots/...)",
       },
       context: {
         type: "string",
