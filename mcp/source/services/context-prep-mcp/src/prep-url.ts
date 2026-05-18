@@ -142,7 +142,7 @@ export function classifyPrepUrlIssue(message: string | undefined, fallbackReason
 
 function recommendedAction(issueClass: FallbackIssueClass): string | undefined {
   if (issueClass === "scraper_core_key_missing") {
-    return "Configure CONTEXT_PREP_SCRAPER_KEY or HWAI_SCRAPER_KEY when auto fallback must handle 403, JS challenge, or low-extraction pages.";
+    return "Configure CONTEXT_PREP_SCRAPER_KEY when auto fallback must handle 403, JS challenge, or low-extraction pages.";
   }
   if (issueClass === "scraper_core_disabled") {
     return "Enable scraper-core fallback for this environment or force parser_stack=local when fallback is intentionally unavailable.";

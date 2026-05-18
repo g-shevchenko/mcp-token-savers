@@ -267,7 +267,7 @@ function runtimeDiagnostics(): Record<string, unknown> {
   if (config.scraperFallbackMode !== "disabled" && !scraperConfigured) {
     warnings.push("scraper_core_fallback_key_missing");
     recommendedActions.push(
-      "Set CONTEXT_PREP_SCRAPER_KEY or HWAI_SCRAPER_KEY when prep_url must handle 403, JS challenge, or low-extraction pages.",
+      "Set CONTEXT_PREP_SCRAPER_KEY when prep_url must handle 403, JS challenge, or low-extraction pages.",
     );
   }
 
@@ -291,7 +291,7 @@ function runtimeDiagnostics(): Record<string, unknown> {
       fallback_mode: config.scraperFallbackMode,
       max_tier: config.scraperMaxTier,
       url_host: safeUrlHost(config.scraperCoreUrl),
-      key_env_candidates: ["CONTEXT_PREP_SCRAPER_KEY", "HWAI_SCRAPER_KEY"],
+      key_env_candidates: ["CONTEXT_PREP_SCRAPER_KEY"],
     },
     warnings,
     recommended_actions: recommendedActions,
