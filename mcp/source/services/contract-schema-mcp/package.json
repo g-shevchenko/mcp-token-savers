@@ -19,7 +19,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@types/node": "^25.8.0",
+    "@types/node": "^25.9.0",
     "typescript": "^6.0.3"
   },
   "keywords": [
