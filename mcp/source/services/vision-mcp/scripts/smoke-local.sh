@@ -23,21 +23,21 @@ const defaultConfig = getVisionConfig();
 
 try {
   assertAllowedImageUrl(
-    "https://cdn.hwai-ops.xyz/screenshots/vision-allowlist-smoke.png",
+    "https://screenshots.example/screenshots/vision-allowlist-smoke.png",
     defaultConfig.allowedHosts,
     false,
   );
-  throw new Error("unexpected product-default allowlist pass for cdn.hwai-ops.xyz");
+  throw new Error("unexpected product-default allowlist pass for screenshots.example");
 } catch (error) {
   if (!String(error?.message || error).includes("not allowed")) {
     throw error;
   }
 }
 
-process.env.VISION_ALLOWED_HOSTS = "example.com,cdn.hwai-ops.xyz";
+process.env.VISION_ALLOWED_HOSTS = "example.com,screenshots.example";
 const gregConfig = getVisionConfig();
 assertAllowedImageUrl(
-  "https://cdn.hwai-ops.xyz/screenshots/vision-allowlist-smoke.png",
+  "https://screenshots.example/screenshots/vision-allowlist-smoke.png",
   gregConfig.allowedHosts,
   gregConfig.allowAnyImageUrl,
 );

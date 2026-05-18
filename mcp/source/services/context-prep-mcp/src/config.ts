@@ -76,10 +76,9 @@ export function getContextPrepConfig(): ContextPrepConfig {
     publicBaseUrl: resolvePublicBaseUrl(httpHost, httpPort),
     requestLogPath:
       process.env.CONTEXT_PREP_REQUEST_LOG_PATH || path.join(cacheDir, "requests.jsonl"),
-    scraperCoreKey: process.env.CONTEXT_PREP_SCRAPER_KEY || process.env.HWAI_SCRAPER_KEY || "",
+    scraperCoreKey: process.env.CONTEXT_PREP_SCRAPER_KEY || "",
     scraperCoreUrl:
       (process.env.CONTEXT_PREP_SCRAPER_CORE_URL ||
-        process.env.HWAI_SCRAPER_URL ||
         "http://localhost:8090").replace(/\/+$/, ""),
     scraperFallbackMode:
       process.env.CONTEXT_PREP_SCRAPER_FALLBACK === "disabled" ? "disabled" : "auto",

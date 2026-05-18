@@ -661,16 +661,16 @@ function classifyError(error: unknown): string {
 }
 
 function runtimeDiagnostics(): Record<string, unknown> {
-  const defaultHwaiCdnAllowed = config.allowedHosts
-    .map((host) => host.toLowerCase())
-    .includes("cdn.hwai-ops.xyz");
+  const normalizedHosts = config.allowedHosts.map((host) => host.toLowerCase());
+  const onlyPlaceholderHostAllowed =
+    normalizedHosts.length > 0 && normalizedHosts.every((host) => host === "example.com");
   const warnings: string[] = [];
   const recommendedActions: string[] = [];
 
-  if (!config.allowAnyImageUrl && !defaultHwaiCdnAllowed) {
-    warnings.push("hwai_cdn_not_allowed");
+  if (!config.allowAnyImageUrl && onlyPlaceholderHostAllowed) {
+    warnings.push("no_real_image_host_allowlisted");
     recommendedActions.push(
-      "Include cdn.hwai-ops.xyz in VISION_ALLOWED_HOSTS when using HWAI screenshot URLs, or remove an overly narrow env override.",
+      "Set VISION_ALLOWED_HOSTS to your screenshot host(s), or set ALLOW_ANY_IMAGE_URL=1, so the server can fetch real screenshot URLs.",
     );
   }
 
@@ -686,7 +686,7 @@ function runtimeDiagnostics(): Record<string, unknown> {
     url_policy: {
       allow_any_image_url: config.allowAnyImageUrl,
       allowed_hosts: config.allowedHosts,
-      hwai_cdn_allowed: defaultHwaiCdnAllowed,
+      only_placeholder_host_allowed: onlyPlaceholderHostAllowed,
     },
     limits: {
       max_image_size_bytes: config.maxImageSizeBytes,

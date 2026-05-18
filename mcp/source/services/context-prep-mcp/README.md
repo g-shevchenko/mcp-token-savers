@@ -250,7 +250,7 @@ HTTP mode behind your own service manager and reverse proxy.
 Optional scraper env:
 
 - `CONTEXT_PREP_SCRAPER_CORE_URL` — default `http://localhost:8090`
-- `CONTEXT_PREP_SCRAPER_KEY` or `HWAI_SCRAPER_KEY` — bearer key for fallback/forced parser-stack mode
+- `CONTEXT_PREP_SCRAPER_KEY` — bearer key for fallback/forced parser-stack mode
 - `CONTEXT_PREP_SCRAPER_MAX_TIER` — default `camoufox`
 - `CONTEXT_PREP_SCRAPER_FALLBACK=disabled` — disables automatic scraper-core fallback
 - `CONTEXT_PREP_SCRAPER_TIMEOUT_MS` — default `30000`

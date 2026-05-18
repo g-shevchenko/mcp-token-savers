@@ -79,7 +79,6 @@ SCRIPTS_CLOSURE=(
 SOURCE_SCRIPTS_CLOSURE=(
   "mcp/source/scripts/hwai-utility-mcp-daily-loop.mjs"
   "mcp/source/scripts/hwai-utility-mcp-measurement-report.mjs"
-  "mcp/source/scripts/hwai-scraper-plane-accounting-report.mjs"
 )
 # mcp/manifest.json is handled separately (may be overridden via --manifest).
 
@@ -167,7 +166,6 @@ chmod +x \
   "$INSTALL_DIR/scripts/hwai-mcp-coverage-report.mjs" \
   "$INSTALL_DIR/mcp/source/scripts/hwai-utility-mcp-daily-loop.mjs" \
   "$INSTALL_DIR/mcp/source/scripts/hwai-utility-mcp-measurement-report.mjs" \
-  "$INSTALL_DIR/mcp/source/scripts/hwai-scraper-plane-accounting-report.mjs" \
   2>/dev/null || true
 
 installed=$(( ${#SCRIPTS_CLOSURE[@]} + ${#SOURCE_SCRIPTS_CLOSURE[@]} + 1 ))

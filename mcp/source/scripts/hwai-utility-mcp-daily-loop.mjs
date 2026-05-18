@@ -113,29 +113,21 @@ function scanPantheonExport(value) {
 const date = argValue("--date", todayUtc());
 const outDir = path.resolve(argValue("--out-dir", homePath(".hwai", "utility-mcp", "daily", date)));
 const reportScript = path.join(repoRoot, "scripts", "hwai-utility-mcp-measurement-report.mjs");
-const scraperAccountingScript = path.join(repoRoot, "scripts", "hwai-scraper-plane-accounting-report.mjs");
 const markdownPath = path.join(outDir, `hwai-utility-mcp-digest-${date}.md`);
 const pantheonPath = path.join(outDir, `hwai-utility-mcp-pantheon-${date}.json`);
-const scraperMarkdownPath = path.join(outDir, `hwai-scraper-plane-accounting-${date}.md`);
-const scraperPantheonPath = path.join(outDir, `hwai-scraper-plane-pantheon-${date}.json`);
 const manifestPath = path.join(outDir, `hwai-utility-mcp-daily-manifest-${date}.json`);
 
 await fs.mkdir(outDir, { recursive: true });
 
 await runNode([reportScript, `--date=${date}`, "--format=markdown", `--out=${markdownPath}`]);
 await runNode([reportScript, `--date=${date}`, "--format=pantheon", `--out=${pantheonPath}`]);
-await runNode([scraperAccountingScript, `--date=${date}`, "--format=markdown", `--out=${scraperMarkdownPath}`]);
-await runNode([scraperAccountingScript, `--date=${date}`, "--format=pantheon", `--out=${scraperPantheonPath}`]);
 
 const pantheonExport = JSON.parse(await fs.readFile(pantheonPath, "utf8"));
-const scraperPantheonExport = JSON.parse(await fs.readFile(scraperPantheonPath, "utf8"));
 const leakageFindings = [
   ...scanPantheonExport(pantheonExport).map((item) => ({ ...item, export: "utility_mcp" })),
-  ...scanPantheonExport(scraperPantheonExport).map((item) => ({ ...item, export: "scraper_plane" })),
 ];
 const safeForPantheon =
   pantheonExport.safe_for_pantheon === true &&
-  scraperPantheonExport.safe_for_pantheon === true &&
   leakageFindings.length === 0;
 const syntheticRequestCount = Object.values(pantheonExport.services || {}).reduce(
   (sum, service) => sum + Number(service?.trace_source_counts?.synthetic || 0),
@@ -152,8 +144,6 @@ const manifest = {
     token_efficiency_markdown_path: markdownPath,
     inbox_markdown_path: markdownPath,
     pantheon_export_path: pantheonPath,
-    scraper_accounting_markdown_path: scraperMarkdownPath,
-    scraper_accounting_pantheon_path: scraperPantheonPath,
     manifest_path: manifestPath,
   },
   leakage_scan: {
@@ -173,11 +163,6 @@ const manifest = {
     metadata_labeled_pct: pantheonExport.summary?.metadata_labeled_pct || 0,
   },
   services: pantheonExport.services,
-  scraper_plane: {
-    summary: scraperPantheonExport.summary,
-    by_endpoint: scraperPantheonExport.by_endpoint,
-    by_mcp: scraperPantheonExport.by_mcp,
-  },
 };
 
 await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");

@@ -351,7 +351,7 @@ function ensureEnvFile(manifest, services, envFile, dryRun) {
   const lines = [
     "# Humanswith.ai MCP Stack local env.",
     "# Fill per-user secrets here. Do not commit this file.",
-    "HWAI_SCRAPER_URL=http://localhost:8090",
+    "CONTEXT_PREP_SCRAPER_CORE_URL=http://localhost:8090",
     "HWAI_CRAWL4AI_URL=http://localhost:11235",
   ];
   for (const key of required) {
