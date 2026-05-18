@@ -31,6 +31,18 @@ function number(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+// Q4d: an `ok:false` that is a correct-by-design caller/policy rejection
+// (SSRF allowlist / host-not-allowed / input validation) is the service
+// WORKING AS DESIGNED — the caller passed bad input — not an actionable
+// service regression. Genuine regressions (5xx/timeout/crash) are NOT
+// matched here, so they still count (the regression-hiding guard is
+// preserved — measure-before-deploy: real-regression detection must not
+// weaken). See notes/q4d_vision_mcp_readiness_classifier_category_error_finding_2026-05-18.md
+function isCallerPolicyRejection(err) {
+  const e = String(err || "").toLowerCase();
+  return /\bis not allowed\b|not an allowed host|allowed hosts:|\bssrf\b|disallowed (host|url)|invalid (url|image url)|must be (https?|a valid)|url is not (http|https|allowed)/.test(e);
+}
+
 async function readJson(filePath) {
   try {
     return JSON.parse(await fs.readFile(filePath, "utf8"));
@@ -265,7 +277,8 @@ async function buildCoverage(endDateIso, windowDays, logBaseDir) {
         const day = String(row.ts).slice(0, 10);
         if (!lastProductionLikeDay || day > lastProductionLikeDay) lastProductionLikeDay = day;
       }
-      if (row.ok === false && tc !== "proof" && tc !== "benchmark") {
+      if (row.ok === false && tc !== "proof" && tc !== "benchmark"
+          && !isCallerPolicyRejection(row.error)) {
         recentActionableError += 1;
       }
     }
