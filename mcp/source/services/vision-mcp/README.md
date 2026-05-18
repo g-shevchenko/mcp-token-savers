@@ -41,11 +41,11 @@ product defaults.
 
 If an already-open Claude Code, Codex, Cursor, or Windsurf session still rejects
 that host after an update, restart the agent session or open a new chat so the
-stdio MCP process reloads its code and environment. For Greg MacBook dogfood,
-the local-only override is:
+stdio MCP process reloads its code and environment. A local override that
+allowlists your own screenshot host looks like:
 
 ```bash
-VISION_ALLOWED_HOSTS=example.com,cdn.hwai-ops.xyz
+VISION_ALLOWED_HOSTS=example.com,your-screenshot-cdn.example
 ```
 
 Use `ALLOW_ANY_IMAGE_URL=1` only for trusted local debugging; it disables the
