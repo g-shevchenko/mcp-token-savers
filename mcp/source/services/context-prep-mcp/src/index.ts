@@ -208,6 +208,17 @@ const GET_ARTIFACT_TOOL: Tool = {
   },
 };
 
+const RUNTIME_DIAGNOSTICS_TOOL: Tool = {
+  name: "get_runtime_diagnostics",
+  description:
+    "Return metadata-only runtime diagnostics for context-prep-mcp configuration. " +
+    "Use when prep_url fails on scraper-core fallback, 403/JS/challenge pages, or when deciding whether this is a code bug versus env/config drift.",
+  inputSchema: {
+    type: "object",
+    properties: {},
+  },
+};
+
 function toolError(message: string) {
   return {
     content: [{ type: "text" as const, text: message }],
@@ -246,6 +257,50 @@ function safeUrlHost(raw: unknown): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function runtimeDiagnostics(): Record<string, unknown> {
+  const scraperConfigured = Boolean(config.scraperCoreKey);
+  const warnings: string[] = [];
+  const recommendedActions: string[] = [];
+
+  if (config.scraperFallbackMode !== "disabled" && !scraperConfigured) {
+    warnings.push("scraper_core_fallback_key_missing");
+    recommendedActions.push(
+      "Set CONTEXT_PREP_SCRAPER_KEY or HWAI_SCRAPER_KEY when prep_url must handle 403, JS challenge, or low-extraction pages.",
+    );
+  }
+
+  if (!config.allowAnyUrl && config.allowedHosts.length === 0) {
+    warnings.push("url_policy_all_hosts_blocked");
+    recommendedActions.push("Set CONTEXT_PREP_ALLOWED_HOSTS or enable CONTEXT_PREP_ALLOW_ANY_URL for intended public URL reads.");
+  }
+
+  return {
+    schema_version: "context-prep-runtime-diagnostics.v1",
+    service: "context-prep-mcp",
+    ok: warnings.length === 0,
+    url_policy: {
+      allow_any_url: config.allowAnyUrl,
+      allowed_hosts_count: config.allowedHosts.length,
+      allowed_hosts: config.allowedHosts,
+      allow_private_urls: config.allowPrivateUrls,
+    },
+    scraper_core: {
+      configured: scraperConfigured,
+      fallback_mode: config.scraperFallbackMode,
+      max_tier: config.scraperMaxTier,
+      url_host: safeUrlHost(config.scraperCoreUrl),
+      key_env_candidates: ["CONTEXT_PREP_SCRAPER_KEY", "HWAI_SCRAPER_KEY"],
+    },
+    warnings,
+    recommended_actions: recommendedActions,
+    data_policy: {
+      includes_secret_values: false,
+      includes_raw_urls: false,
+      includes_artifact_urls: false,
+    },
+  };
 }
 
 function metadataSource(args: Record<string, unknown>): string | undefined {
@@ -398,12 +453,19 @@ function createContextPrepServer(): Server {
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
-      tools: [PREP_LOGS_TOOL, PREP_URL_TOOL, PREP_TEXT_TOOL, COMPRESS_CONTEXT_TOOL, GET_ARTIFACT_TOOL],
+      tools: [PREP_LOGS_TOOL, PREP_URL_TOOL, PREP_TEXT_TOOL, COMPRESS_CONTEXT_TOOL, GET_ARTIFACT_TOOL, RUNTIME_DIAGNOSTICS_TOOL],
     };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+
+    if (name === "get_runtime_diagnostics") {
+      const result = await audited(name, "mcp", args as Record<string, unknown> | undefined, async () =>
+        runtimeDiagnostics(),
+      );
+      return { content: [{ type: "text" as const, text: stringifyResult(result) }] };
+    }
 
     if (name === "prep_logs") {
       const text = asText(args?.text);
