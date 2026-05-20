@@ -1,0 +1,31 @@
+{
+  "name": "@hwai/pbt-runner-mcp",
+  "version": "0.1.0",
+  "description": "Property-based testing runner MCP. Wraps hypothesis (Python) + fast-check (TypeScript) with structured counterexample parsing. Three property archetypes: invariant, inverse, idempotence.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3"
+  },
+  "keywords": [
+    "mcp",
+    "property-based-testing",
+    "hypothesis",
+    "fast-check",
+    "tdd",
+    "invariant"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}
