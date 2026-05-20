@@ -1,0 +1,30 @@
+{
+  "name": "@hwai/tdd-gate-mcp",
+  "version": "0.1.0",
+  "description": "Granular TDD discipline checks exposed as MCP tools — edit-allowed predicate, test-immutability diff analysis, red-state classifier, durable test-to-impl link registry.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3"
+  },
+  "keywords": [
+    "mcp",
+    "tdd",
+    "test-immutability",
+    "verify-red",
+    "agent-handoff"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}
