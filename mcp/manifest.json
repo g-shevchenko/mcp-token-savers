@@ -35,7 +35,9 @@
     },
     "repo": {
       "description": "Repository hygiene and architecture support for large local repos.",
-      "extends": ["core"],
+      "extends": [
+        "core"
+      ],
       "services": [
         "language-graph-mcp",
         "repo-hygiene-mcp",
@@ -44,12 +46,15 @@
         "dependency-risk-mcp",
         "docs-sync-mcp",
         "golden-dataset-mcp",
-        "agent-trace-mcp"
+        "agent-trace-mcp",
+        "test-results-mcp"
       ]
     },
     "browser-debug": {
       "description": "Browser debugging, screenshot prep, and local visual regression helpers.",
-      "extends": ["core"],
+      "extends": [
+        "core"
+      ],
       "services": [
         "playwright-trace-mcp",
         "vision-mcp",
@@ -59,7 +64,10 @@
     },
     "full": {
       "description": "All local token-efficiency MCPs. Use after core passes doctor.",
-      "extends": ["repo", "browser-debug"],
+      "extends": [
+        "repo",
+        "browser-debug"
+      ],
       "services": []
     }
   },
@@ -181,6 +189,13 @@
       "service_dir": "services/visual-baseline-mcp",
       "stdio": "services/visual-baseline-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/visual-baseline-mcp",
+      "category": "local-utility"
+    },
+    "test-results-mcp": {
+      "client_name": "test_results",
+      "service_dir": "services/test-results-mcp",
+      "stdio": "services/test-results-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/test-results-mcp",
       "category": "local-utility"
     }
   }

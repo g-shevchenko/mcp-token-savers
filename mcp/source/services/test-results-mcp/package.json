@@ -1,0 +1,31 @@
+{
+  "name": "@hwai/test-results-mcp",
+  "version": "0.1.0",
+  "description": "JSON-ledger MCP for durable test/feature pass-fail contracts between AI agents. Implements the structured feature_list.json pattern: each acceptance criterion is {passes:false} until verified end-to-end, with immutability lock.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "smoke": "bash ./scripts/smoke-local.sh",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3"
+  },
+  "keywords": [
+    "mcp",
+    "test-results",
+    "feature-list",
+    "tdd",
+    "agent-handoff",
+    "token-savings"
+  ],
+  "author": "Humanswith.ai",
+  "license": "MIT"
+}
