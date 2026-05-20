@@ -47,7 +47,8 @@
         "docs-sync-mcp",
         "golden-dataset-mcp",
         "agent-trace-mcp",
-        "test-results-mcp"
+        "test-results-mcp",
+        "tdd-gate-mcp"
       ]
     },
     "browser-debug": {
@@ -196,6 +197,13 @@
       "service_dir": "services/test-results-mcp",
       "stdio": "services/test-results-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/test-results-mcp",
+      "category": "local-utility"
+    },
+    "tdd-gate-mcp": {
+      "client_name": "tdd_gate",
+      "service_dir": "services/tdd-gate-mcp",
+      "stdio": "services/tdd-gate-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/tdd-gate-mcp",
       "category": "local-utility"
     }
   }

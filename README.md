@@ -118,15 +118,16 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Build regression datasets from real misses | `golden-dataset-mcp`, `agent-trace-mcp` |
 | Debug browser traces and visual changes | `playwright-trace-mcp`, `vision-mcp`, `visual-baseline-mcp` |
 | Track test/feature pass-fail contracts between AI agent roles | `test-results-mcp` |
+| Enforce TDD discipline at MCP-tool level (edit gate + test immutability + verify red) | `tdd-gate-mcp` |
 
 ## Profiles
 
 | Profile | Installs | Best for |
 | --- | ---: | --- |
 | `core` | 6 MCPs | First install, safe local repo work |
-| `repo` | 15 MCPs | Large codebases, docs, hygiene, local regression cases |
+| `repo` | 16 MCPs | Large codebases, docs, hygiene, local regression cases |
 | `browser-debug` | 10 MCPs | Playwright traces, screenshots, visual checks |
-| `full` | 18 MCPs | All local token-efficiency MCPs, no external context required |
+| `full` | 19 MCPs | All local token-efficiency MCPs, no external context required |
 
 ## Verification
 
