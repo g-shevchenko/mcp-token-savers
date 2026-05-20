@@ -56,7 +56,8 @@ export interface RecordPropertyRunResult {
 // ─── Parser: Hypothesis (Python) ─────────────────────────────────────────────
 
 const HYPO_FALSIFY_RE = /Falsifying example:/i;
-const HYPO_EXAMPLES_RE = /(\d+)\s+examples?\s+(?:passed|tried)/i;
+// ReDoS-safe: bounded digit + whitespace quantifiers (see CodeQL js/redos)
+const HYPO_EXAMPLES_RE = /(\d{1,9})\s{1,10}examples?\s{1,10}(?:passed|tried)/i;
 const PY_IMPORT_ERROR_RE = /\b(ImportError|ModuleNotFoundError|No module named)\b/;
 const PY_SYNTAX_ERROR_RE = /\bSyntaxError\b/;
 
@@ -128,18 +129,42 @@ function extractFalsifyingBlock(stderr: string): string {
   return block.trim();
 }
 
+// ReDoS-safe: split-based parser. Bounded name + value lengths.
+const NAME_RE = /^[a-zA-Z_]\w{0,99}$/;
 function extractAssignments(block: string): string | null {
-  // Match "name=value" patterns, stopping at commas/parens
-  const matches = block.match(/[a-zA-Z_]\w*\s*=\s*[^,)\n]+/g);
-  if (!matches || matches.length === 0) return null;
-  return matches.map((m) => m.trim().replace(/\s*,\s*$/, "")).join(", ");
+  const parts = block.split(/[,\n)]/);
+  const assignments: string[] = [];
+  for (const rawPart of parts) {
+    if (assignments.length >= 50) break; // bound output
+    const part = rawPart.slice(0, 500); // bound input
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    const name = part.slice(0, eq).trim();
+    const value = part.slice(eq + 1).trim();
+    if (NAME_RE.test(name) && value.length > 0 && value.length <= 400) {
+      assignments.push(`${name}=${value}`);
+    }
+  }
+  return assignments.length > 0 ? assignments.join(", ") : null;
 }
 
 // ─── Parser: fast-check (TypeScript) ─────────────────────────────────────────
 
-const FC_COUNTEREXAMPLE_RE = /Counterexample:\s*(\[[^\]]*\]|\{[^}]*\}|\S.*?)(?:\n|$)/i;
-const FC_TESTS_RE = /after\s+(\d+)\s+tests?/i;
+// ReDoS-safe: bounded digit + whitespace; FC counterexample uses indexOf, not regex
+const FC_TESTS_RE = /after\s{1,10}(\d{1,9})\s{1,10}tests?/i;
 const TS_MODULE_NOT_FOUND_RE = /\b(Cannot find module|ERR_MODULE_NOT_FOUND|MODULE_NOT_FOUND)\b/;
+
+function extractFastCheckCounterexample(text: string): string | null {
+  // indexOf-based instead of regex with alternation + lazy match (CodeQL js/redos safe)
+  const idx = text.toLowerCase().indexOf("counterexample:");
+  if (idx < 0) return null;
+  const tail = text.slice(idx + "counterexample:".length);
+  // Take only the rest of the current line (cap to 500 chars for safety)
+  const newlineIdx = tail.indexOf("\n");
+  const line = (newlineIdx >= 0 ? tail.slice(0, newlineIdx) : tail).slice(0, 500);
+  const trimmed = line.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 export function parseFastCheckOutput(
   stdout: string,
@@ -158,10 +183,9 @@ export function parseFastCheckOutput(
     });
   }
 
-  // Counterexample
-  const cmMatch = FC_COUNTEREXAMPLE_RE.exec(raw_output);
-  if (cmMatch) {
-    const counterexample = cmMatch[1].trim();
+  // Counterexample (indexOf-based extractor — ReDoS-safe)
+  const counterexample = extractFastCheckCounterexample(raw_output);
+  if (counterexample) {
     const testsMatch = FC_TESTS_RE.exec(raw_output);
     return makeResult({
       outcome: "falsified",
