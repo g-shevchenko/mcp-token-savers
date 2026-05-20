@@ -18,6 +18,14 @@ The public stack is local-only. It does not install external web/search/crawl
 MCPs by default, and it does not require API keys for the default or full
 profile.
 
+> **Deep-dive write-up:** *How I cut my Claude Code token usage by 75.5% with
+> 17 local MCPs* — public research article with the pattern, the measured
+> numbers, and the comparison against Cursor, Cody, Continue, Aider,
+> Firecrawl, LLMLingua, Martian, RouteLLM, Helicone, Langfuse, and the
+> Anthropic / Cloudflare *Code Execution with MCP* primary sources.
+> **Read:** [English](https://gregshevchenko.com/research/mcp-stack-token-economy/)
+> · [Русский](https://gregshevchenko.com/ru/research/mcp-stack-token-economy/).
+
 ## Why
 
 Modern coding agents are strongest when they see the right evidence, not the
@@ -211,6 +219,14 @@ wording to use in public materials.
 ```
 
 ## Documentation
+
+External long-form context and background:
+
+- [Research article (English) — How I cut my Claude Code token usage by 75.5% with 17 local MCPs](https://gregshevchenko.com/research/mcp-stack-token-economy/)
+- [Research article (Russian) — Как я сократил расход токенов в Claude Code на 75.5% с 17 локальными MCP](https://gregshevchenko.com/ru/research/mcp-stack-token-economy/)
+- [Author profile — Gregory Shevchenko](https://gregshevchenko.com/) (founder of [Humanswith.ai](https://humanswith.ai/))
+
+Repo-internal:
 
 - [MCP bundle details](./mcp/README.md)
 - [Module docs](./mcp/docs/README.md)
