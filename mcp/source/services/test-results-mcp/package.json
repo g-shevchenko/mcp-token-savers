@@ -1,7 +1,7 @@
 {
   "name": "@hwai/test-results-mcp",
-  "version": "0.1.0",
-  "description": "JSON-ledger MCP for durable test/feature pass-fail contracts between AI agents. Implements the structured feature_list.json pattern: each acceptance criterion is {passes:false} until verified end-to-end, with immutability lock.",
+  "version": "0.2.0",
+  "description": "JSON-ledger MCP for durable test/feature pass-fail contracts between AI agents. v0.2.0 ships 4 of 5 planned tools: init_feature_list, mark_pass, list_failing, get_feature.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

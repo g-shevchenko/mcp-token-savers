@@ -12,19 +12,34 @@ Multi-agent AI coding workflows benefit from a durable, machine-readable contrac
 - Reduces verifier→fixer handoff to compact tool calls (one `list_failing()` returns a few hundred bytes vs reading a multi-KB evidence file)
 - Provides an immutability contract: only a verifier role may flip `passes`, only with cited evidence
 
-Inspired by published AI-engineering research on long-running coding agents: structured JSON contracts outperform prose markdown for multi-session agent workflows. The model is observed to be less likely to inappropriately overwrite JSON than Markdown when both are presented as durable contracts.
+Inspired by published AI-engineering research on long-running coding agents: structured JSON contracts outperform prose markdown for multi-session agent workflows.
 
 ## Status
 
-v0.1.0 — initial scaffold (May 2026).
+v0.2.0 — 4 of 5 planned tools.
 
 | Tool | Status |
 |---|---|
-| `init_feature_list(task_id, features[])` | ✅ implemented + smoke-tested |
-| `mark_pass(task_id, feature_id, evidence_ref)` | planned |
-| `list_failing(task_id)` | planned |
-| `get_feature(task_id, feature_id)` | planned |
+| `init_feature_list(task_id, features[])` | ✅ |
+| `mark_pass(task_id, feature_id, evidence_ref)` | ✅ |
+| `list_failing(task_id)` | ✅ |
+| `get_feature(task_id, feature_id)` | ✅ |
 | `compare_runs(task_id, run_a, run_b)` | planned |
+
+## Semantics
+
+### Immutability lock
+
+- `init_feature_list` refuses to overwrite an existing ledger for the same `task_id`. To start fresh, use a new `task_id`.
+- `mark_pass` refuses to re-mark a feature that's already `passes: true`. The ledger is durable; the value of `passes` is the durable signal. A second pass attempt is a caller bug.
+
+### Verifier role semantics
+
+Only the verifier role should call `mark_pass` — the durable pattern requires that pass-flipping happen in a fresh-context, read-only-tools subagent. `mark_pass` requires a non-empty `evidence_ref` (URL, file path, or artifact ID) and clears any prior `last_attempt_error`.
+
+### Fixer role semantics
+
+The fixer calls `list_failing(task_id)` to know what's still broken (compact `{id, description, last_attempt_error}[]`), then `get_feature(task_id, feature_id)` to drill into one.
 
 ## Schema
 
@@ -47,13 +62,7 @@ v0.1.0 — initial scaffold (May 2026).
 }
 ```
 
-`evidence_required` is optional. All other fields are required. The ledger is written to `.agent/tasks/<task_id>/feature_list.json` (relative to the configured root directory).
-
-## Constraints
-
-- `task_id` must be kebab-case (lowercase alphanumeric + hyphens, no slashes/dots/spaces)
-- `features` array must have at least one entry
-- The ledger is immutable once created: a second `init_feature_list` call for the same `task_id` throws `already exists` (use a new task_id or remove the existing ledger first)
+`evidence_required` is optional. All other fields are required. The ledger is written to `<rootDir>/.agent/tasks/<task_id>/feature_list.json`.
 
 ## Build + smoke
 
@@ -63,20 +72,26 @@ npm run build
 npm run smoke
 ```
 
-The smoke script (`scripts/smoke-local.sh`) runs 6 checks against the built `dist/index.js`:
+The smoke script (`scripts/smoke-local.sh`) runs **11 checks** against the built `dist/index.js`:
 
-1. `init_feature_list` creates a ledger with correct defaults
+1. `init_feature_list` creates a ledger
 2. `feature_list.json` is written to `.agent/tasks/<id>/`
-3. `evidence_required` is preserved when provided
-4. Immutability lock throws on re-init
-5. Empty features array is rejected
-6. Invalid task_id (with slashes/dots/spaces) is rejected
+3. `init` immutability lock (re-init throws)
+4. `mark_pass` flips false→true with evidence; siblings untouched
+5. `mark_pass` immutability (re-mark blocked)
+6. `mark_pass` rejects missing task
+7. `mark_pass` rejects empty `evidence_ref`
+8. `list_failing` returns compact failing list (no `passes`/`passed_at` keys)
+9. `get_feature` single-feature drill-down
+10. `get_feature` rejects missing `feature_id`
+11. End-to-end: mark all → `list_failing` returns `[]`
 
 ## Data policy
 
-- Durable local writes: the ledger is written under the caller-provided `rootDir` (default `process.cwd()`)
-- No telemetry, no network calls — pure filesystem ops
-- Raw task descriptions and acceptance criteria are stored as-is in the ledger (the ledger IS the durable contract); callers concerned about sensitive content should hash before passing to `init_feature_list`
+- Pure filesystem ops; no network, no telemetry
+- Writes only under caller-provided `rootDir` (default `process.cwd()`)
+- `task_id` enforced kebab-case
+- Schema version 1; ledger stored at `<rootDir>/.agent/tasks/<task_id>/feature_list.json`
 
 ## License
 
