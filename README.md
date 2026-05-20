@@ -23,8 +23,7 @@ profile.
 > numbers, and the comparison against Cursor, Cody, Continue, Aider,
 > Firecrawl, LLMLingua, Martian, RouteLLM, Helicone, Langfuse, and the
 > Anthropic / Cloudflare *Code Execution with MCP* primary sources.
-> **Read:** [English](https://gregshevchenko.com/research/mcp-stack-token-economy/)
-> · [Русский](https://gregshevchenko.com/ru/research/mcp-stack-token-economy/).
+> [Read it on gregshevchenko.com](https://gregshevchenko.com/research/mcp-stack-token-economy/).
 
 ## Why
 
@@ -222,8 +221,7 @@ wording to use in public materials.
 
 External long-form context and background:
 
-- [Research article (English) — How I cut my Claude Code token usage by 75.5% with 17 local MCPs](https://gregshevchenko.com/research/mcp-stack-token-economy/)
-- [Research article (Russian) — Как я сократил расход токенов в Claude Code на 75.5% с 17 локальными MCP](https://gregshevchenko.com/ru/research/mcp-stack-token-economy/)
+- [Research article — How I cut my Claude Code token usage by 75.5% with 17 local MCPs](https://gregshevchenko.com/research/mcp-stack-token-economy/)
 - [Author profile — Gregory Shevchenko](https://gregshevchenko.com/) (founder of [Humanswith.ai](https://humanswith.ai/))
 
 Repo-internal:
