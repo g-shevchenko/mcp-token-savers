@@ -48,7 +48,8 @@
         "golden-dataset-mcp",
         "agent-trace-mcp",
         "test-results-mcp",
-        "tdd-gate-mcp"
+        "tdd-gate-mcp",
+        "pbt-runner-mcp"
       ]
     },
     "browser-debug": {
@@ -204,6 +205,13 @@
       "service_dir": "services/tdd-gate-mcp",
       "stdio": "services/tdd-gate-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/tdd-gate-mcp",
+      "category": "local-utility"
+    },
+    "pbt-runner-mcp": {
+      "client_name": "pbt_runner",
+      "service_dir": "services/pbt-runner-mcp",
+      "stdio": "services/pbt-runner-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/pbt-runner-mcp",
       "category": "local-utility"
     }
   }
