@@ -43,6 +43,7 @@ Root `.claude`, `.cursor`, and `.windsurf` policy/config files are scanned, but 
 - `scan_duplicate_code` - normalized duplicate source blocks without returning block text.
 - `scan_dependency_cycles` - relative JS/TS import cycles.
 - `scan_complexity_hotspots` - simple lines/functions/branches/imports ranking.
+- `score_module_depth` - Ousterhout depth proxy for a single file (`depth_ratio` = implementation complexity / interface surface; bands shallow/balanced/deep + advisory god_function/deep_nesting/many_params factors). Optional `compare_to` for a before/after delta. Repo-root path guard; paths hashed in logs. Measures interface-vs-implementation only — NOT hidden missing-abstraction seams (use `scan_duplicate_code` for those).
 - `propose_cleanup_plan` - combined reviewed cleanup plan; no file changes.
 - `get_artifact` - read local artifacts.
 - `get_measurement_report` - aggregate local usage, quality counters, token savings, and Pantheon-safe export.

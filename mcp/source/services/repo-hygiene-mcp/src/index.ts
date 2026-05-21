@@ -15,6 +15,7 @@ import {
   scanUnusedDependencies,
 } from "./hygiene.js";
 import { buildMeasurementReport } from "./measurement.js";
+import { ModuleDepthArgs, scoreModuleDepth } from "./module-depth.js";
 import { appendRequestLog } from "./request-log.js";
 import { stableHash } from "./text-utils.js";
 
@@ -83,6 +84,22 @@ const TOOLS: Tool[] = [
     inputSchema: { type: "object", properties: COMMON_SCAN_PROPS },
   },
   {
+    name: "score_module_depth",
+    description:
+      "Score a single source file's Ousterhout module depth: depth_ratio = implementation complexity / interface surface. High ratio = deep (small interface, large impl — do NOT over-decompose). Low ratio = shallow (thin wrapper or wide-interface utils bag — a deepening candidate). Bands: shallow <3, balanced 3-8, deep >=8, plus advisory factors (god_function/deep_nesting/many_params). Pass compare_to to also get a before/after delta (path = after, compare_to = before). Measures interface-vs-implementation only — NOT hidden missing-abstraction seams (use scan_duplicate_code for those).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Source file to score (the 'after'), relative to repo_root. Not logged raw." },
+        compare_to: { type: "string", description: "Optional second file treated as the 'before' for a depth delta. Not logged raw." },
+        lang: { type: "string", enum: ["python", "ts"], description: "Override language inference (else inferred from file extension)." },
+        repo_root: { type: "string", description: "Local repo root. Not logged raw." },
+        metadata: METADATA_SCHEMA,
+      },
+      required: ["path"],
+    },
+  },
+  {
     name: "propose_cleanup_plan",
     description:
       "Combine repo hygiene scans into a reviewed cleanup plan. Advisory only; no files are changed, moved, or deleted.",
@@ -137,6 +154,16 @@ function asHygieneArgs(args: Record<string, unknown>): HygieneArgs {
   };
 }
 
+function asModuleDepthArgs(args: Record<string, unknown>): ModuleDepthArgs {
+  return {
+    repo_root: typeof args.repo_root === "string" ? args.repo_root : undefined,
+    path: typeof args.path === "string" ? args.path : undefined,
+    compare_to: typeof args.compare_to === "string" ? args.compare_to : undefined,
+    lang: args.lang === "python" || args.lang === "ts" ? args.lang : undefined,
+    metadata: args.metadata,
+  };
+}
+
 function metadataSource(args: Record<string, unknown> | undefined): string | undefined {
   const metadata = args?.metadata;
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
@@ -163,6 +190,15 @@ function summarizeInput(tool: string, args: Record<string, unknown> | undefined)
     return {
       artifact_file: typeof args.artifact_url_or_file === "string" ? artifactFileName(args.artifact_url_or_file) : undefined,
       max_chars: args.max_chars,
+    };
+  }
+  if (tool === "score_module_depth") {
+    return {
+      path_hash: typeof args.path === "string" ? stableHash(args.path) : undefined,
+      compare_to_hash: typeof args.compare_to === "string" ? stableHash(args.compare_to) : undefined,
+      repo_root_hash: typeof args.repo_root === "string" ? stableHash(args.repo_root) : undefined,
+      lang: args.lang,
+      metadata_source: metadataSource(args),
     };
   }
   return {
@@ -194,6 +230,8 @@ function summarizeOutput(result: any): Record<string, unknown> {
     cycles_count: result?.cycles_count || 0,
     hotspots_count: result?.hotspots_count || 0,
     plan_items_count: result?.plan_items_count || 0,
+    band: result?.band,
+    depth_ratio: result?.depth_ratio,
     artifact_outputs: result?.artifact_file ? 1 : 0,
     artifact_file: result?.artifact_file,
     raw_tokens_estimate: result?.raw_tokens_estimate || result?.token_savings?.raw_tokens_estimate || 0,
@@ -234,6 +272,9 @@ async function runTool(name: string, rawArgs: unknown) {
         break;
       case "scan_complexity_hotspots":
         result = await scanComplexityHotspots(config, asHygieneArgs(args));
+        break;
+      case "score_module_depth":
+        result = await scoreModuleDepth(config, asModuleDepthArgs(args));
         break;
       case "propose_cleanup_plan":
         result = await proposeCleanupPlan(config, asHygieneArgs(args));
