@@ -117,6 +117,30 @@ await fs.writeFile(
   'export function complex(items: string[]) { let total = 0; for (const item of items) { if (item.includes("a") && item.length > 2) total += 1; if (item.includes("b") || item.includes("c")) total += 1; switch (item[0]) { case "x": total += 1; break; default: total += 0; } } return total > 2 ? total : 0; }\n',
   "utf8",
 );
+// module-depth fixtures (newline-proper — the scorer reads indentation)
+await fs.writeFile(
+  path.join(tempDir, "fixture", "src", "deep-mod.py"),
+  [
+    "def score_app(app):",
+    "    s = 50",
+    "    flags = []",
+    '    if app.get("x"):',
+    "        for k in app:",
+    "            if k:",
+    "                s += 1",
+    "                flags.append(k)",
+    "    if s > 40:",
+    "        s -= 5",
+    '    return {"s": s, "flags": flags}',
+    "",
+  ].join("\n"),
+  "utf8",
+);
+await fs.writeFile(
+  path.join(tempDir, "fixture", "src", "shallow-wrap.py"),
+  ["import requests", "", "def post_it(payload):", '    return requests.post("u", json=payload).json()', ""].join("\n"),
+  "utf8",
+);
 await fs.mkdir(path.join(tempDir, "fixture", ".claude", "worktrees", "generated-branch", "src"), { recursive: true });
 await fs.writeFile(
   path.join(tempDir, "fixture", ".claude", "worktrees", "generated-branch", "src", "noisy.ts"),
@@ -151,6 +175,7 @@ const {
   scanUnusedDependencies,
 } = await import("../dist/hygiene.js");
 const { buildMeasurementReport } = await import("../dist/measurement.js");
+const { scoreModuleDepth } = await import("../dist/module-depth.js");
 
 const config = getRepoHygieneConfig();
 const args = { repo_root: path.join(tempDir, "fixture"), max_files: 50, max_findings: 20, block_lines: 5, metadata: { source: "benchmark-local" } };
@@ -202,11 +227,35 @@ assert(
 );
 assert("no-raw-code-leak", !combined.includes("value.trim().toUpperCase") && !combined.includes("joined.replace"), {});
 
+// module-depth scorer (Ousterhout depth proxy) — must agree with the blind LLM precision direction
+const deepScore = await scoreModuleDepth(config, { repo_root: path.join(tempDir, "fixture"), path: "src/deep-mod.py" });
+const shallowScore = await scoreModuleDepth(config, { repo_root: path.join(tempDir, "fixture"), path: "src/shallow-wrap.py" });
+const depthCompare = await scoreModuleDepth(config, {
+  repo_root: path.join(tempDir, "fixture"),
+  path: "src/deep-mod.py",
+  compare_to: "src/shallow-wrap.py",
+});
+const depthCombined = JSON.stringify({ deepScore, shallowScore, depthCompare });
+assert("module-depth-deep", deepScore.band === "deep", deepScore);
+assert("module-depth-shallow", shallowScore.band === "shallow", shallowScore);
+assert("module-depth-ratio-orders", deepScore.depth_ratio > shallowScore.depth_ratio, {
+  deep: deepScore.depth_ratio,
+  shallow: shallowScore.depth_ratio,
+});
+assert("module-depth-compare-deeper", depthCompare.compare?.direction === "deeper", depthCompare.compare);
+assert(
+  "module-depth-no-raw-code-leak",
+  !depthCombined.includes("requests.post") && !depthCombined.includes("flags.append"),
+  {},
+);
+
 const result = {
   benchmark: "repo-hygiene-local-golden",
-  cases: 17,
+  cases: 22,
   failures,
   rows: [
+    { name: "module-depth-deep-ratio", value: deepScore.depth_ratio },
+    { name: "module-depth-shallow-ratio", value: shallowScore.depth_ratio },
     { name: "unused-dependency-candidates", value: unusedDeps.candidates_count },
     { name: "dynamic-imports-seen", value: unusedDeps.dynamic_imports_seen },
     { name: "unused-code-candidates", value: unusedCode.candidates_count },

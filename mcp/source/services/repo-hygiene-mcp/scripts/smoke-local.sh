@@ -112,6 +112,8 @@ call_mcp() {
 }
 
 scan_args="$("$NODE_BIN" -e 'console.log(JSON.stringify({ repo_root: process.argv[1], max_files: 50, max_findings: 20, block_lines: 5, metadata: { source: "smoke-local" } }))' "$TMP_DIR")"
+depth_args="$("$NODE_BIN" -e 'console.log(JSON.stringify({ repo_root: process.argv[1], path: "src/complex.ts", metadata: { source: "smoke-local" } }))' "$TMP_DIR")"
+depth_compare_args="$("$NODE_BIN" -e 'console.log(JSON.stringify({ repo_root: process.argv[1], path: "src/complex.ts", compare_to: "src/app.ts", metadata: { source: "smoke-local" } }))' "$TMP_DIR")"
 measurement_args="$("$NODE_BIN" -e 'console.log(JSON.stringify({ date: new Date().toISOString().slice(0, 10), metadata: { source: "smoke-local" } }))')"
 reduced_measurement_args="$("$NODE_BIN" -e 'console.log(JSON.stringify({ date: new Date().toISOString().slice(0, 10), metadata: { source: "smoke-local-reduced-path" } }))')"
 
@@ -123,6 +125,8 @@ call_mcp "$(call_tool 6 scan_dependency_cycles "$scan_args")"
 call_mcp "$(call_tool 7 scan_complexity_hotspots "$scan_args")"
 call_mcp "$(call_tool 8 propose_cleanup_plan "$scan_args")"
 call_mcp "$(call_tool 9 get_measurement_report "$measurement_args")"
+call_mcp "$(call_tool 11 score_module_depth "$depth_args")"
+call_mcp "$(call_tool 12 score_module_depth "$depth_compare_args")"
 
 REDUCED_CACHE_DIR="$(mktemp -d)"
 {
@@ -138,7 +142,11 @@ grep -q '"name":"scan_unused_code"' "$OUT_FILE"
 grep -q '"name":"scan_duplicate_code"' "$OUT_FILE"
 grep -q '"name":"scan_dependency_cycles"' "$OUT_FILE"
 grep -q '"name":"scan_complexity_hotspots"' "$OUT_FILE"
+grep -q '"name":"score_module_depth"' "$OUT_FILE"
 grep -q '"name":"propose_cleanup_plan"' "$OUT_FILE"
+grep -q '"depth_ratio"' "$OUT_FILE"
+grep -q '"band"' "$OUT_FILE"
+grep -q '"direction"' "$OUT_FILE"
 grep -q 'repo-hygiene.v0.1' "$OUT_FILE"
 grep -q 'repo-hygiene-measurement.v0.1' "$OUT_FILE"
 grep -q 'left-pad' "$OUT_FILE"
