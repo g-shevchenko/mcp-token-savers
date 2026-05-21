@@ -119,14 +119,15 @@ export async function checkEditAllowed(
     ? filePath
     : path.join(options?.rootDir ?? process.cwd(), filePath);
 
-  // Not in src/** path — bypass
-  if (!/(^|\/)src\//.test(abs) && !/\/services\/[^/]+\/src\//.test(abs)) {
-    return { allowed: true, reason: "not in src/** path" };
-  }
-
-  // Extension bypass (non-code)
+  // Extension bypass (non-code) — checked FIRST so a .md/.json/.yaml is
+  // always reported as an extension bypass regardless of its path.
   if (NON_CODE_EXT_RE.test(abs)) {
     return { allowed: true, reason: "non-code extension bypass" };
+  }
+
+  // Not in src/** path — bypass (a code file outside src/** is not gated)
+  if (!/(^|\/)src\//.test(abs) && !/\/services\/[^/]+\/src\//.test(abs)) {
+    return { allowed: true, reason: "not in src/** path" };
   }
 
   // Excluded path bypass (generated, migrations, etc.)
