@@ -123,6 +123,31 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Enforce TDD discipline at MCP-tool level (edit gate + test immutability + verify red) | `tdd-gate-mcp` |
 | Property-based testing with hypothesis / fast-check (counterexample extraction) | `pbt-runner-mcp` |
 
+## Measurement-Driven Routing
+
+Different deterministic compressors win in different regimes. The same input,
+the same agent task, the same output budget — but the right compressor depends
+on whether the LLM needs a one-line gist, a specific fact buried in document
+metadata, or a full extractive summary. Picking the wrong tier silently
+loses quality.
+
+Humanswith.ai operates an internal **measurement-driven routing layer** that
+maps `(input_size, output_budget, task_type)` to the Pareto-best compressor
+for that case. The mapping is deterministic — no LLM in the routing path —
+and the rules are derived from a paired-corpus benchmark that scores each
+candidate compressor on both byte-saving and content-preservation. Inputs
+below a length threshold are routed past compression entirely (some
+compressors inflate short inputs by adding wrapper sections).
+
+The philosophy: **measurement is the moat, not the compressor.**
+- Tools like `mcp-sophon` (below) are valuable in their regime.
+- The agency value is knowing *when* to call which one.
+- That routing intelligence is HWAI's internal stack; this public repo
+  exposes the measured vendor candidates, not the routing engine.
+
+A long-form write-up of the methodology and per-tier measurements lives
+at the [research article](https://gregshevchenko.com/research/mcp-stack-token-economy/).
+
 ## Measured Vendor MCPs
 
 The repo's local MCPs are the core stack. We also measure third-party MCPs
