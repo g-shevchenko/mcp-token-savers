@@ -148,6 +148,40 @@ The philosophy: **measurement is the moat, not the compressor.**
 A long-form write-up of the methodology and per-tier measurements lives
 at the [research article](https://gregshevchenko.com/research/mcp-stack-token-economy/).
 
+## Two Primary Axes: Byte Saving AND Cache-Friendliness
+
+Byte saving is necessary but not sufficient. The second metric that decides
+production cost is whether the compressor's output is **byte-identical across
+runs of the same input**. Byte-identical output lets the downstream provider's
+prefix cache reuse work from prior turns — turning a measured byte saving
+into a real cost reduction. Non-deterministic output defeats the cache:
+every turn looks like a fresh prompt to the provider and pays the full
+prefill again, often eating the byte saving outright.
+
+This framing is canon in the
+[agents-best-practices](https://github.com/DenisSergeevitch/agents-best-practices)
+reference (MIT, provider-neutral synthesis of OpenAI / Anthropic / MCP
+guidance). The core rule: **stable prefix, dynamic suffix**. Tool definitions
+and static instructions appear first in deterministic order; dynamic
+runtime state appears at the end. Any volatile value injected before a
+stable block destroys the cache for every downstream turn that shares
+the prefix.
+
+Our deterministic-compressor benchmark records both axes:
+
+- **Byte-saving ratio** = `output_chars / input_chars` (lower is better).
+- **Cache-friendly score** = fraction of fixtures whose output is
+  byte-identical across N ≥ 2 runs of the same input
+  (`unique_md5_count == 1`). 100% means full byte-stability; lower means
+  downstream cache reuse drops proportionally.
+
+A compressor that wins byte savings but loses output stability is a
+single-axis benchmark hiding the other half of the cost. We report both
+axes for every measured MCP — including failure modes the vendor docs
+don't disclose. See the
+[research article's cache-friendliness section](https://gregshevchenko.com/research/mcp-stack-token-economy/#cache-heading)
+for the long-form treatment.
+
 ## Measured Vendor MCPs
 
 The repo's local MCPs are the core stack. We also measure third-party MCPs
@@ -158,8 +192,13 @@ variance + LLM-judged content preservation) and publish the honest result
 ### `mcp-sophon` (npm, MIT, by lacausecrypto) — *measured 2026-05-24*
 
 **Byte saving (passes the bar):** 92.7% mean char-saving on a 15-fixture
-realistic corpus × N=5 (75 measurements). Byte-deterministic across all
-runs (CV = 0.0). Latency 60–200 ms per call.
+realistic corpus × N=5 (75 measurements). Latency 60–200 ms per call.
+
+**Cache-friendly score: 100% (15/15 fixtures byte-stable).** CV = 0.0
+across all runs — sophon's section-selector is deterministic by
+construction (no LLM in the path), so downstream provider prefix-cache
+reuse works correctly across turns. This is the necessary condition
+for byte savings to translate into real production cost reduction.
 
 **Content preservation (caveat-heavy):** on the same 15 fixtures with one
 gpt-4o-mini-judged QA pair per fixture, sophon at `--max-tokens 500`
