@@ -1235,7 +1235,18 @@ async function findRelatedFiles(
         root,
         config,
       );
-      for (const file of stdout.split("\n").map((line) => line.trim()).filter(Boolean).slice(0, 8)) {
+      // Sort rg hits BEFORE slicing — rg --files-with-matches doesn't
+      // guarantee deterministic order across runs (directory traversal +
+      // internal parallelism can race). If we kept the first 8 in rg's
+      // order, the SET of related files (not just their order) varied
+      // between runs of the same query. Sorting ensures the first 8
+      // alphabetically are always chosen — same input → same set.
+      const hits = stdout
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .sort();
+      for (const file of hits.slice(0, 8)) {
         const normalized = displayPath(file);
         if (
           !classifyFilteredPath(normalized) &&
@@ -1249,7 +1260,15 @@ async function findRelatedFiles(
     }
   }
 
+  // Sort by path before slicing — `related` is a Map whose insertion order
+  // depends on rg --files-with-matches output order, which is NOT stable
+  // across runs. Without this sort, the "Related files" section of
+  // compact_context varied between runs of the same query, producing
+  // different md5s on identical input. Downstream provider prefix-cache
+  // reuse REQUIRES byte-stability, so we sort to make the iteration
+  // deterministic. Pinned by scripts/byte-stability.golden.test.mjs.
   return Array.from(related.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
     .slice(0, 20)
     .map(([relatedPath, reason]) => ({ path: displayPath(relatedPath), reason }));
 }
