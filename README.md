@@ -314,6 +314,32 @@ Publicly verified scope:
 See [Token efficiency claims](./docs/token-efficiency-claims.md) for the exact
 wording to use in public materials.
 
+## Benchmark Your Own Stack
+
+The `benchmark/` directory contains the same primitives we use to measure
+compressors under both axes (byte saving AND cache-friendliness), stripped
+of any HWAI-specific fixtures or measurements. Pure Python, stdlib only,
+no network.
+
+```bash
+# Run the harness on the example fixtures (5 neutral samples):
+cd benchmark
+python3 run_bench.py --compressor first200 --fixtures examples/fixtures.jsonl --repeat 5
+
+# Audit any MCP / source tree against the 12 DSA cache-killing anti-patterns:
+python3 anti_pattern_audit.py --mcp path/to/your-mcp/src
+
+# Run the unit tests:
+python3 -m pytest tests/ -q
+```
+
+Plug your own compressor as a `(str) -> str` function. See
+[`benchmark/README.md`](./benchmark/README.md) for the full API + how to
+register your own compressor in the harness. The framing for the
+cache-friendliness axis comes from the canonical DSA reference at
+[github.com/DenisSergeevitch/agents-best-practices](https://github.com/DenisSergeevitch/agents-best-practices)
+(MIT, provider-neutral).
+
 ## Privacy And Security
 
 - Do not trust the repository from GitHub stars or social proof; inspect and
