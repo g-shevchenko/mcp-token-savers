@@ -1,0 +1,66 @@
+# Dependabot auto-merge — low-risk dev-dependency bumps don't sit stale.
+#
+# Why this exists: before this workflow, Dependabot grouped dev-deps PRs
+# (typescript + @types/node minor/patch across 17 MCP services) sat for
+# 6 days before being noticed, then Dependabot itself rebased them as a
+# fresh PR. That noise — fresh PR weekly, no human action — is exactly
+# what auto-merge is for.
+#
+# Scope (deliberately narrow):
+#   - Fires ONLY on PRs from the official dependabot[bot] actor
+#   - Auto-merges ONLY when ALL of:
+#       (a) dependency-type = "direct:development" (dev-deps, not prod)
+#       (b) update-type ∈ {semver-minor, semver-patch}  (NOT semver-major)
+#       (c) all status checks pass (gh pr merge --auto waits for them)
+#   - Major bumps, production deps, and anything CI-failing → human review
+#
+# Refs:
+#   https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions
+#   https://github.com/dependabot/fetch-metadata
+
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    # Only run on actual Dependabot PRs — pull_request_target is a
+    # privileged trigger; never run on arbitrary-author PRs.
+    if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7  # v2.3.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge dev-deps minor + patch
+        if: |
+          steps.metadata.outputs.dependency-type == 'direct:development' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-patch')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          echo "Enabling auto-merge for $PR_URL"
+          echo "  dependency-type: ${{ steps.metadata.outputs.dependency-type }}"
+          echo "  update-type:     ${{ steps.metadata.outputs.update-type }}"
+          gh pr merge --auto --squash "$PR_URL"
+
+      - name: Skip (not eligible for auto-merge)
+        if: |
+          steps.metadata.outputs.dependency-type != 'direct:development' ||
+          (steps.metadata.outputs.update-type != 'version-update:semver-minor' &&
+           steps.metadata.outputs.update-type != 'version-update:semver-patch')
+        run: |
+          echo "Not auto-merging: requires human review."
+          echo "  dependency-type: ${{ steps.metadata.outputs.dependency-type }}"
+          echo "  update-type:     ${{ steps.metadata.outputs.update-type }}"
