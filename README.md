@@ -1,10 +1,12 @@
-# Humanswith.ai MCP Stack
+# Humanswith.ai MCP Token Savers
+
+> **Repo renamed 2026-05-24:** `g-shevchenko/hwai-mcp-stack` → `g-shevchenko/mcp-token-savers`. Old URLs still redirect via GitHub. The local install path `~/.hwai/hwai-mcp-stack/` is preserved for backward compatibility — existing users do not need to reinstall.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![CI](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/ci.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/codeql.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/scorecard.yml/badge.svg)](https://github.com/g-shevchenko/hwai-mcp-stack/actions/workflows/scorecard.yml)
-[![Last commit](https://img.shields.io/github/last-commit/g-shevchenko/hwai-mcp-stack)](https://github.com/g-shevchenko/hwai-mcp-stack/commits/main)
+[![CI](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/ci.yml/badge.svg)](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/codeql.yml/badge.svg)](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/scorecard.yml/badge.svg)](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/scorecard.yml)
+[![Last commit](https://img.shields.io/github/last-commit/g-shevchenko/mcp-token-savers)](https://github.com/g-shevchenko/mcp-token-savers/commits/main)
 [![MCP](https://img.shields.io/badge/MCP-17%20local%20servers-blue)](./mcp/manifest.json)
 
 Local-first **Token Efficiency Platform for Agentic IDEs**.
@@ -47,8 +49,8 @@ judgment rather than raw search, logs, traces, or screenshots.
 Recommended inspect-first path:
 
 ```bash
-git clone https://github.com/g-shevchenko/hwai-mcp-stack.git
-cd hwai-mcp-stack
+git clone https://github.com/g-shevchenko/mcp-token-savers.git
+cd mcp-token-savers
 bash scripts/agent-preinstall-check.sh
 bash install.sh --dry-run
 bash install.sh
@@ -67,26 +69,26 @@ machine-readable [trust manifest](./trust/hwai-mcp-stack.trust.json).
 Fast local-first install after inspection:
 
 ```bash
-/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
+/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/main/install.sh)"
 ```
 
 For repeatable installs, prefer a release tag or commit SHA instead of `main`:
 
 ```bash
 HWAI_MCP_BRANCH=76540dcfbcd12284fc2b783d22c5c091624eaf82 \
-/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/76540dcfbcd12284fc2b783d22c5c091624eaf82/install.sh)"
+/bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/76540dcfbcd12284fc2b783d22c5c091624eaf82/install.sh)"
 ```
 
 Install all 17 local MCP servers:
 
 ```bash
-HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
+HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/main/install.sh)"
 ```
 
 Install only for selected clients:
 
 ```bash
-HWAI_MCP_PROFILE=full HWAI_MCP_CLIENTS=codex,cursor /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
+HWAI_MCP_PROFILE=full HWAI_MCP_CLIENTS=codex,cursor /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/main/install.sh)"
 ```
 
 Requirements: macOS/Linux shell, `git`, Node.js, and `npm`.
@@ -120,6 +122,61 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Track test/feature pass-fail contracts between AI agent roles | `test-results-mcp` |
 | Enforce TDD discipline at MCP-tool level (edit gate + test immutability + verify red) | `tdd-gate-mcp` |
 | Property-based testing with hypothesis / fast-check (counterexample extraction) | `pbt-runner-mcp` |
+
+## Measured Vendor MCPs
+
+The repo's local MCPs are the core stack. We also measure third-party MCPs
+through our deterministic-compressor benchmark (input → output ratio + CV
+variance + LLM-judged content preservation) and publish the honest result
+— including failure modes the vendor docs don't disclose.
+
+### `mcp-sophon` (npm, MIT, by lacausecrypto) — *measured 2026-05-24*
+
+**Byte saving (passes the bar):** 92.7% mean char-saving on a 15-fixture
+realistic corpus × N=5 (75 measurements). Byte-deterministic across all
+runs (CV = 0.0). Latency 60–200 ms per call.
+
+**Content preservation (caveat-heavy):** on the same 15 fixtures with one
+gpt-4o-mini-judged QA pair per fixture, sophon at `--max-tokens 500`
+preserved 10/15 = 67% of correct answers vs full-context baseline (87%).
+Pattern: sophon's section-selector drops document **headers, titles,
+bylines, status codes, and version metadata** in favor of body content.
+
+**`--query` parameter is ignored in CLI mode** at default budget — we
+tested 4 different queries on the same input and got byte-identical
+output (same SHA-256). Sophon's "query-aware" branding does not hold at
+this configuration.
+
+#### When to route to sophon
+
+✅ **USE for:** long-document summarization where the answer is in body
+content (≥1000 chars input). E.g. "give me the gist of this 24k-char
+build log."
+
+❌ **DO NOT USE for:** specific-fact lookups (version numbers, IDs,
+status codes, author bylines, config values). Sophon may drop the
+answer entirely.
+
+⚠️ **Caller plumbing required:** length-gate ≥ 1000 chars (sophon
+inflates shorter inputs by adding a `<general>...</general>` wrapper).
+
+#### Install (separate from this stack)
+
+```bash
+npm install -g mcp-sophon   # MIT, no API keys
+sophon doctor                # verify
+```
+
+Sophon is **not bundled** with this stack — it's a third-party MCP we've
+measured. Install it on your own; route to it per the guidance above.
+
+#### Methodology
+
+Full measurement details: research article on the
+[token-economy axes (C1/C2/C3)](https://gregshevchenko.com/research/mcp-stack-token-economy/).
+Our deterministic-compressor harness measures any MCP that exposes a pure
+`text → text` interface and emits per-fixture + corpus-level verdicts
+against documented CV/ratio/quality bars.
 
 ## Profiles
 
