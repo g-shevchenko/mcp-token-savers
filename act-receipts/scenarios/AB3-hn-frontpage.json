@@ -1,0 +1,51 @@
+{
+  "schema_version": "scenario_spec.ab.v1",
+  "scenario_id": "AB3-hn-frontpage",
+  "description": "Real-public-target A/B scenario. Target: news.ycombinator.com front page. Has TEXT-CONTENT jitter (\"5 minutes ago\", vote counts, comment counts, rotating front-page stories) which current DOM_NOISE_ATTR_PATTERNS (data-time/timestamp/frame/focused attributes) probably do NOT catch. This is intentional — AB3's job is to HONESTLY test the receipt's CURRENT pattern set against real prod page jitter shape.",
+  "target_url": "https://news.ycombinator.com/",
+  "rationale_target_choice": "HN chosen because (a) real public site we don't operate, (b) no anti-bot wall — clean Camoufox loads, (c) predictable jitter shape: 'X hours ago' text + numeric vote counts + comment counts in visible text, NOT in data-time attrs, (d) no per-account state so cold sessions return identical-shape pages with only content jitter varying. Expected outcome: control < 100% (raw HTML varies), treatment likely ALSO < 100% (text-content jitter escapes current noise patterns). Evidence either way is useful — proves the pattern set's real-prod fit OR motivates per-site extension. WARNING — selector miss is a real failure mode here: an earlier draft used `table.itemlist`, which doesn't exist on HN (HN uses `table#hnmain` + `tr.athing`). A missing selector hashes the same empty region in BOTH arms → false 100% byte-stability → false huge positive delta. The companion `python/artifact_guard.py::detect_selector_miss_artifact` catches this. We re-run with `body` (broad-match, can't selector-miss).",
+  "session_id_prefix": "ab3-hn",
+  "actions": [
+    {
+      "op": "goto",
+      "url": "https://news.ycombinator.com/",
+      "wait_until": "domcontentloaded",
+      "timeout_ms": 30000
+    },
+    {
+      "op": "wait_stable",
+      "selector": "body",
+      "idle_ms": 1500,
+      "timeout_ms": 15000,
+      "min_length": 1000
+    }
+  ],
+  "capture": {
+    "full_html": true,
+    "text": {
+      "selector": "body",
+      "mode": "innerText",
+      "max_chars": 20000
+    }
+  },
+  "act_receipt_region": "body",
+  "control_treatment_diff": {
+    "control": {
+      "capture.act_receipt": false,
+      "capture.full_html": true,
+      "description": "Captures raw full_html — any jitter in the HN page surfaces here."
+    },
+    "treatment": {
+      "capture.act_receipt": true,
+      "capture.act_receipt_region": "body",
+      "description": "Broad-match region — receipt's dom_region_hash strips data-time/timestamp/frame/focused attrs IF present. The `body` choice intentionally avoids selector-miss artifacts (see rationale_target_choice)."
+    }
+  },
+  "expected_outcome": {
+    "control_cache_friendly_score": "Low — front-page stories change order/vote-counts every few minutes",
+    "treatment_cache_friendly_score": "Probably also low IF HN's jitter is in text-content not data-* attrs. Treatment ≈ control = honest signal that the default pattern set needs extending for real-prod text-content jitter. Treatment > control IF HN happens to have data-* jitter caught by the default patterns.",
+    "wall_ms_overhead_bound": "Mean delta should be <500ms in theory; in our published measurements it was +3017ms mean / +7.7s p95 on real Camoufox — real-prod overhead is significant, document it. N=20 gives enough samples for honest p95 + mean comparison."
+  },
+  "min_runs_per_arm": 20,
+  "max_runs_per_arm": 30
+}

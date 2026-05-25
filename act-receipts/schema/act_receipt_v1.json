@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/g-shevchenko/mcp-token-savers/blob/main/act-receipts/schema/act_receipt_v1.json",
+  "title": "scraper-mcp.act_receipt.v1",
+  "description": "Action receipt returned by a cache-friendly browser MCP after performing a user-shaped action. Companion to https://gregshevchenko.com/research/mcp-stack-token-economy-part-2/.",
+  "type": "object",
+  "required": ["schema_version", "action", "pre_state", "post_state", "errors"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "scraper-mcp.act_receipt.v1"
+    },
+    "action": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["click", "type", "press", "scroll", "wait", "navigate", "select", "drag"]
+        },
+        "selector": { "type": "string" },
+        "value": { "type": ["string", "number", "boolean", "null"] },
+        "options": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "pre_state": {
+      "type": "object",
+      "required": ["url", "dom_region_hash"],
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "dom_region_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "dom_region_size_bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "post_state": {
+      "type": "object",
+      "required": ["url", "dom_region_hash", "changed", "stable", "navigated"],
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "dom_region_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "dom_region_size_bytes": { "type": "integer", "minimum": 0 },
+        "changed": { "type": "boolean" },
+        "stable": { "type": "boolean" },
+        "navigated": { "type": "boolean" }
+      }
+    },
+    "errors": {
+      "type": "object",
+      "required": ["console", "network", "selector_not_found", "timeout", "action_failed"],
+      "additionalProperties": false,
+      "properties": {
+        "console": { "type": "array", "items": {} },
+        "network": { "type": "array", "items": {} },
+        "selector_not_found": { "type": "boolean" },
+        "timeout": { "type": "boolean" },
+        "action_failed": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["reason"],
+              "properties": {
+                "reason": { "type": "string" },
+                "retry_safe": { "type": "boolean" }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "observability": {
+      "description": "Informational; stripped from the canonical byte representation used for prompt-cache.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tier_used": { "type": "string" },
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "timing_breakdown": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        }
+      }
+    }
+  }
+}

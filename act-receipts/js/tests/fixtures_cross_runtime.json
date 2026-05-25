@@ -1,0 +1,136 @@
+[
+  {
+    "name": "minimal_click",
+    "receipt": {
+      "schema_version": "scraper-mcp.act_receipt.v1",
+      "action": {
+        "type": "click",
+        "selector": "a[href='/about']"
+      },
+      "pre_state": {
+        "url": "https://example.com/",
+        "dom_region_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "post_state": {
+        "url": "https://example.com/about",
+        "dom_region_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "changed": true,
+        "stable": true,
+        "navigated": true
+      },
+      "errors": {
+        "console": [],
+        "network": [],
+        "selector_not_found": false,
+        "timeout": false,
+        "action_failed": null
+      }
+    },
+    "expected_canonical_sha256": "42bc52b6cc613ef2ddf51f46141b08439315c0b4c357d30cf375c2f37789241d",
+    "expected_canonical_bytes_utf8": "{\"action\": {\"selector\": \"a[href='/about']\", \"type\": \"click\"}, \"errors\": {\"action_failed\": null, \"console\": [], \"network\": [], \"selector_not_found\": false, \"timeout\": false}, \"post_state\": {\"changed\": true, \"dom_region_hash\": \"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"navigated\": true, \"stable\": true, \"url\": \"https://example.com/about\"}, \"pre_state\": {\"dom_region_hash\": \"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"url\": \"https://example.com/\"}, \"schema_version\": \"scraper-mcp.act_receipt.v1\"}"
+  },
+  {
+    "name": "click_with_observability_stripped",
+    "receipt": {
+      "schema_version": "scraper-mcp.act_receipt.v1",
+      "action": {
+        "type": "click",
+        "selector": "a[href='/about']"
+      },
+      "pre_state": {
+        "url": "https://example.com/",
+        "dom_region_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "dom_region_size_bytes": 1842
+      },
+      "post_state": {
+        "url": "https://example.com/about",
+        "dom_region_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "dom_region_size_bytes": 2871,
+        "changed": true,
+        "stable": true,
+        "navigated": true
+      },
+      "errors": {
+        "console": [],
+        "network": [],
+        "selector_not_found": false,
+        "timeout": false,
+        "action_failed": null
+      },
+      "observability": {
+        "tier_used": "patchright",
+        "duration_ms": 234,
+        "timing_breakdown": {
+          "selector_lookup_ms": 12,
+          "action_execution_ms": 45
+        }
+      }
+    },
+    "expected_canonical_sha256": "42bc52b6cc613ef2ddf51f46141b08439315c0b4c357d30cf375c2f37789241d",
+    "expected_canonical_bytes_utf8": "{\"action\": {\"selector\": \"a[href='/about']\", \"type\": \"click\"}, \"errors\": {\"action_failed\": null, \"console\": [], \"network\": [], \"selector_not_found\": false, \"timeout\": false}, \"post_state\": {\"changed\": true, \"dom_region_hash\": \"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"navigated\": true, \"stable\": true, \"url\": \"https://example.com/about\"}, \"pre_state\": {\"dom_region_hash\": \"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"url\": \"https://example.com/\"}, \"schema_version\": \"scraper-mcp.act_receipt.v1\"}"
+  },
+  {
+    "name": "type_with_unicode_value",
+    "receipt": {
+      "schema_version": "scraper-mcp.act_receipt.v1",
+      "action": {
+        "type": "type",
+        "selector": "input[name='q']",
+        "value": "Привет мир — émoji test 🎯"
+      },
+      "pre_state": {
+        "url": "https://example.com/search",
+        "dom_region_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "post_state": {
+        "url": "https://example.com/search",
+        "dom_region_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "changed": true,
+        "stable": true,
+        "navigated": false
+      },
+      "errors": {
+        "console": [],
+        "network": [],
+        "selector_not_found": false,
+        "timeout": false,
+        "action_failed": null
+      }
+    },
+    "expected_canonical_sha256": "d9ed983db4db6a52dbc82de495441391cb27655a82e964da29c37b8c9d6a7459",
+    "expected_canonical_bytes_utf8": "{\"action\": {\"selector\": \"input[name='q']\", \"type\": \"type\", \"value\": \"Привет мир — émoji test 🎯\"}, \"errors\": {\"action_failed\": null, \"console\": [], \"network\": [], \"selector_not_found\": false, \"timeout\": false}, \"post_state\": {\"changed\": true, \"dom_region_hash\": \"sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\", \"navigated\": false, \"stable\": true, \"url\": \"https://example.com/search\"}, \"pre_state\": {\"dom_region_hash\": \"sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\", \"url\": \"https://example.com/search\"}, \"schema_version\": \"scraper-mcp.act_receipt.v1\"}"
+  },
+  {
+    "name": "click_selector_not_found",
+    "receipt": {
+      "schema_version": "scraper-mcp.act_receipt.v1",
+      "action": {
+        "type": "click",
+        "selector": "button#nonexistent"
+      },
+      "pre_state": {
+        "url": "https://example.com/",
+        "dom_region_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      "post_state": {
+        "url": "https://example.com/",
+        "dom_region_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "changed": false,
+        "stable": true,
+        "navigated": false
+      },
+      "errors": {
+        "console": [],
+        "network": [],
+        "selector_not_found": true,
+        "timeout": false,
+        "action_failed": {
+          "reason": "no element matched selector",
+          "retry_safe": false
+        }
+      }
+    },
+    "expected_canonical_sha256": "042c43c0e5be5649f71deffe7f497189f4c7f437281136bf000a8cf286c09a99",
+    "expected_canonical_bytes_utf8": "{\"action\": {\"selector\": \"button#nonexistent\", \"type\": \"click\"}, \"errors\": {\"action_failed\": {\"reason\": \"no element matched selector\", \"retry_safe\": false}, \"console\": [], \"network\": [], \"selector_not_found\": true, \"timeout\": false}, \"post_state\": {\"changed\": false, \"dom_region_hash\": \"sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\", \"navigated\": false, \"stable\": true, \"url\": \"https://example.com/\"}, \"pre_state\": {\"dom_region_hash\": \"sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\", \"url\": \"https://example.com/\"}, \"schema_version\": \"scraper-mcp.act_receipt.v1\"}"
+  }
+]

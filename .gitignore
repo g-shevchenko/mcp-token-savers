@@ -42,3 +42,7 @@ docs/humanswithai-mcp-stack.md
 .cursor/rules/humanswithai-mcp-autopilot.mdc
 .windsurf/mcp.json
 .windsurf/rules/humanswithai-mcp-autopilot.md
+
+# Python
+__pycache__/
+*.pyc
