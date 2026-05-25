@@ -1,0 +1,51 @@
+{
+  "schema_version": "scenario_spec.ab.v1",
+  "scenario_id": "AB2-jittery-fixture",
+  "description": "Controlled-jitter A/B scenario. Targets a synthetic /test/jitter endpoint that emits one fresh `data-time=\"<ms>\"` attribute per request, with the rest of the page byte-stable. A minimal reference implementation lives in `examples/jitter_endpoint.py` — start it locally before running this scenario. Designed to demonstrate the marginal cache-friendliness gain of act_receipt.v1's dom_region_hash noise-stripping vs a generic jitter-strip.",
+  "target_url": "http://127.0.0.1:3030/test/jitter",
+  "rationale_target_choice": "AB1 (iana.org) baseline shows both arms ≥ 0.80 cache-friendly — a generic strip is already highly effective on stable targets. To demonstrate treatment > control we need a target whose jitter ESCAPES the control's strip but is CAUGHT by the receipt's dom_region_hash noise patterns. The /test/jitter endpoint isolates that variable: only data-time varies, and data-time is in DOM_NOISE_ATTR_PATTERNS, so receipt strips it while control's full_html capture surfaces it.",
+  "session_id_prefix": "ab2-jitter",
+  "actions": [
+    {
+      "op": "goto",
+      "url": "http://127.0.0.1:3030/test/jitter",
+      "wait_until": "domcontentloaded",
+      "timeout_ms": 15000
+    },
+    {
+      "op": "wait_stable",
+      "selector": "body",
+      "idle_ms": 500,
+      "timeout_ms": 5000,
+      "min_length": 50
+    }
+  ],
+  "capture": {
+    "full_html": true,
+    "text": {
+      "selector": "body",
+      "mode": "innerText",
+      "max_chars": 10000
+    }
+  },
+  "act_receipt_region": "body",
+  "control_treatment_diff": {
+    "control": {
+      "capture.act_receipt": false,
+      "capture.full_html": true,
+      "description": "Captures raw HTML (full_html=true) — data-time bytes flow into control's hash and aren't in JITTER_FIELDS, so control sees N unique hashes."
+    },
+    "treatment": {
+      "capture.act_receipt": true,
+      "capture.act_receipt_region": "body",
+      "description": "Receipt's dom_region_hash(html) strips data-time per DOM_NOISE_ATTR_PATTERNS before SHA-256. canonical_bytes also strips observability + dom_region_size_bytes. Expected stable hash."
+    }
+  },
+  "expected_outcome": {
+    "control_cache_friendly_score": "~ 1/N (each run gets unique data-time ms; full_html bytes differ per run; unique_hashes ≈ N)",
+    "treatment_cache_friendly_score": "1.0 (receipt strips data-time; canonical bytes identical across runs)",
+    "delta_interpretation": "Strongly positive delta (e.g. +80pp) = act_receipt.v1's noise-pattern strip is providing the cache-friendliness improvement it was designed for. Negative or zero delta = bug in noise pattern handling — investigate."
+  },
+  "min_runs_per_arm": 5,
+  "max_runs_per_arm": 20
+}

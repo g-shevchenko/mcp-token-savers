@@ -1,0 +1,49 @@
+{
+  "schema_version": "scenario_spec.ab.v1",
+  "scenario_id": "AB1-iana-click",
+  "description": "Static-target A/B scenario. Single goto + wait_stable on iana.org example-domains. Deterministic page (RFC 2606 stable, no JS deps, no auth, no rate limit). Same actions/capture for control + treatment; only capture.act_receipt differs.",
+  "target_url": "https://www.iana.org/help/example-domains",
+  "rationale_target_choice": "iana.org example-domains is chosen because it has NO meaningful DOM jitter — the page is byte-stable across calls. Used as a baseline: if a generic strip is already perfect on this target, act_receipt cannot outperform it (the delta is expected to be 0pp). The interesting result on a static target is the invariant: byte-stability of canonical hashing across runtimes (JS, Python, Camoufox-driven browser MCP).",
+  "session_id_prefix": "ab1-iana",
+  "actions": [
+    {
+      "op": "goto",
+      "url": "https://www.iana.org/help/example-domains",
+      "wait_until": "domcontentloaded",
+      "timeout_ms": 30000
+    },
+    {
+      "op": "wait_stable",
+      "selector": "body",
+      "idle_ms": 1500,
+      "timeout_ms": 15000,
+      "min_length": 100
+    }
+  ],
+  "capture": {
+    "text": {
+      "selector": "body",
+      "mode": "innerText",
+      "max_chars": 50000
+    }
+  },
+  "act_receipt_region": "body",
+  "control_treatment_diff": {
+    "control": {
+      "capture.act_receipt": false,
+      "description": "Baseline op:'act'-style behavior — no receipt emitted."
+    },
+    "treatment": {
+      "capture.act_receipt": true,
+      "capture.act_receipt_region": "body",
+      "description": "New act_receipt.v1 behavior — handler emits structured receipt with jitter-stripped canonical bytes."
+    }
+  },
+  "expected_outcome": {
+    "control_cache_friendly_score": "≥ 0.80 (generic strip is highly effective on stable targets like iana.org)",
+    "treatment_cache_friendly_score": "≥ control (act_receipt strips MORE jitter than the raw response — observability subtree fully removed, dom_region_size_bytes stripped). If treatment < control, the receipt assembly has a bug.",
+    "delta_interpretation": "Positive delta = act_receipt achieves what it was designed to achieve (more cache-friendly than the raw response). Zero delta on a static target is the expected null result. Negative delta = receipt is leaking jitter not yet stripped."
+  },
+  "min_runs_per_arm": 5,
+  "max_runs_per_arm": 20
+}
