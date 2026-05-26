@@ -30,7 +30,8 @@
         "context-prep-mcp",
         "static-analysis-mcp",
         "repo-history-mcp",
-        "repo-quality-gate-mcp"
+        "repo-quality-gate-mcp",
+        "context-handoff-mcp"
       ]
     },
     "repo": {
@@ -212,6 +213,13 @@
       "service_dir": "services/pbt-runner-mcp",
       "stdio": "services/pbt-runner-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/pbt-runner-mcp",
+      "category": "local-utility"
+    },
+    "context-handoff-mcp": {
+      "client_name": "context_handoff",
+      "service_dir": "services/context-handoff-mcp",
+      "stdio": "services/context-handoff-mcp/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/context-handoff-mcp",
       "category": "local-utility"
     }
   }

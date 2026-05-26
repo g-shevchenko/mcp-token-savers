@@ -38,7 +38,7 @@ Copies the daily readiness aggregator closure into a non-TCC directory
 
 Options:
   --manifest=PATH    MCP scope manifest to install as <root>/mcp/manifest.json
-                     Default: this repo's public mcp/manifest.json (17 utility
+                     Default: this repo's public mcp/manifest.json (18 utility
                      MCPs). Internal callers pass the monorepo private manifest.
   --install-dir=PATH Target directory. Default ~/.hwai/token-efficiency-collector
   --check            Do not install. Verify that an existing install is
