@@ -1,7 +1,7 @@
 # MCP Bundle
 
 This directory contains the installer, manifest, docs, and bundled source for
-the 17-module local Humanswith.ai MCP Stack.
+the 21-module local Humanswith.ai MCP Stack.
 
 Product framing: this bundle is the local module layer for **HWAI Context
 Router**, the technical core of a **Token Efficiency Platform for Agentic IDEs**.
@@ -31,7 +31,7 @@ local agent instructions:
 
 | Profile | Purpose |
 | --- | --- |
-| `core` | HWAI Context Router, retrieval, context prep, static analysis, repo history, quality gate. |
+| `core` | HWAI Context Router, context handoff, retrieval, context prep, static analysis, repo history, quality gate. |
 | `repo` | Core plus language graph, repo/docs hygiene, contracts, dependency risk, docs sync, golden datasets, agent trace. |
 | `browser-debug` | Core plus Playwright trace, Vision prep, Visual Baseline, agent trace. |
 | `full` | All local profiles. Use after `core` passes. |

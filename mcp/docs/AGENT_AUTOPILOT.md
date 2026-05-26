@@ -17,7 +17,7 @@ plain language, not memorize MCP tool names.
 HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/hwai-mcp-stack/main/install.sh)"
 ```
 
-`full` means all 17 local token-efficiency MCPs. It does not install external
+`full` means all 21 local token-efficiency MCPs. It does not install external
 web/search/crawl wrappers.
 
 To skip local docs/rules updates only for config-only repair:
