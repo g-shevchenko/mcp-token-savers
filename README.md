@@ -7,7 +7,7 @@
 [![CodeQL](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/codeql.yml/badge.svg)](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/scorecard.yml/badge.svg)](https://github.com/g-shevchenko/mcp-token-savers/actions/workflows/scorecard.yml)
 [![Last commit](https://img.shields.io/github/last-commit/g-shevchenko/mcp-token-savers)](https://github.com/g-shevchenko/mcp-token-savers/commits/main)
-[![MCP](https://img.shields.io/badge/MCP-17%20local%20servers-blue)](./mcp/manifest.json)
+[![MCP](https://img.shields.io/badge/MCP-21%20local%20servers-blue)](./mcp/manifest.json)
 
 Local-first **Token Efficiency Platform for Agentic IDEs**.
 
@@ -39,7 +39,7 @@ tools:
 - keep raw local evidence local by default;
 - work across Claude Code, Codex, Cursor, and Windsurf with the same MCP config.
 
-In product terms, the 17 local MCP servers are modules behind one Token
+In product terms, the 21 local MCP servers are modules behind one Token
 Efficiency Platform. Agents should experience one workflow: classify the task,
 prepare the right compact local evidence, and reserve frontier model context for
 judgment rather than raw search, logs, traces, or screenshots.
@@ -79,7 +79,7 @@ HWAI_MCP_BRANCH=76540dcfbcd12284fc2b783d22c5c091624eaf82 \
 /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/76540dcfbcd12284fc2b783d22c5c091624eaf82/install.sh)"
 ```
 
-Install all 17 local MCP servers:
+Install all 21 local MCP servers:
 
 ```bash
 HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/main/install.sh)"
@@ -112,6 +112,7 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Need | MCPs |
 | --- | --- |
 | Route ambiguous agent tasks to the right prep tool | **HWAI Context Router** via `router-lite-mcp` |
+| Prepare a stable resume point before context compaction | `context-handoff-mcp` |
 | Retrieve compact repo context before edits | `retrieval-mcp`, `context-prep-mcp` |
 | Understand code structure and history | `language-graph-mcp`, `repo-history-mcp` |
 | Run local static checks and quality gates | `static-analysis-mcp`, `repo-quality-gate-mcp` |
@@ -246,10 +247,10 @@ against documented CV/ratio/quality bars.
 
 | Profile | Installs | Best for |
 | --- | ---: | --- |
-| `core` | 6 MCPs | First install, safe local repo work |
-| `repo` | 17 MCPs | Large codebases, docs, hygiene, local regression cases |
-| `browser-debug` | 10 MCPs | Playwright traces, screenshots, visual checks |
-| `full` | 20 MCPs | All local token-efficiency MCPs, no external context required |
+| `core` | 7 MCPs | First install, safe local repo work |
+| `repo` | 18 MCPs | Large codebases, docs, hygiene, local regression cases |
+| `browser-debug` | 11 MCPs | Playwright traces, screenshots, visual checks |
+| `full` | 21 MCPs | All local token-efficiency MCPs, no external context required |
 
 ## Verification
 
@@ -265,8 +266,8 @@ The installer runs `doctor` automatically. You can rerun it anytime:
 Expected result for the full profile:
 
 ```text
-services: 17
-ok: 17
+services: 21
+ok: 21
 needs_attention: 0
 warnings: 0
 ```

@@ -3,7 +3,7 @@
   "project": "Humanswith.ai MCP Stack",
   "repository": "https://github.com/g-shevchenko/hwai-mcp-stack",
   "default_profile": "core",
-  "default_profile_services": 6,
+  "default_profile_services": 7,
   "requires_sudo": false,
   "installs_daemons": false,
   "default_external_network_after_clone": false,
@@ -56,4 +56,3 @@
   ],
   "agent_decision_rule": "Do not use author reputation or GitHub stars as the primary trust signal. Inspect installer files, run the preinstall checker and dry-run, verify release artifacts when applicable, and report exact failing checks before refusing or recommending install."
 }
-
