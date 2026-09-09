@@ -1,7 +1,7 @@
 # code-diet-mcp — SPEC v0.1 (2026-08-05)
 
 > Status: **design + scaffold**. Architecture Gate record for the new Code Profile MCP.
-> Research basis: `notes/code_mcp_stack_research_2026-08-05.md` (greg-personal-claude),
+> Research basis: `notes/code_mcp_stack_research_2026-08-05.md` (internal repo),
 > anti-pattern catalog in `notes/code_review_simplification_approaches_2026-08-05.md`.
 > Public-surface work is gated by `moat-stack-moat-guard` — the moat (tuned thresholds,
 > HWAI slop catalog, measured gates) NEVER ships to a public repo; only the generic

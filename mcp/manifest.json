@@ -59,7 +59,6 @@
       ],
       "services": [
         "playwright-trace-mcp",
-        "vision-mcp",
         "visual-baseline-mcp",
         "agent-trace-mcp"
       ]
@@ -184,13 +183,6 @@
       "service_dir": "services/playwright-trace-mcp",
       "stdio": "services/playwright-trace-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/playwright-trace-mcp",
-      "category": "local-utility"
-    },
-    "vision-mcp": {
-      "client_name": "vision",
-      "service_dir": "services/vision-mcp",
-      "stdio": "services/vision-mcp/scripts/local-stdio.sh",
-      "cache_dir": "$HOME/.hwai/vision-mcp",
       "category": "local-utility"
     },
     "visual-baseline-mcp": {

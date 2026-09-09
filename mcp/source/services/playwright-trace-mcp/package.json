@@ -11,7 +11,6 @@
     "benchmark": "npm run build && node ./scripts/benchmark-local.mjs",
     "benchmark:real": "npm run build && node ./scripts/benchmark-local.mjs --with-real",
     "benchmark:agent-trace": "npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/agent-trace-mcp && npm --prefix ../agent-trace-mcp run build && node ../../scripts/hwai-playwright-agent-trace-proof.mjs",
-    "benchmark:vision": "npm run build && node ../../scripts/hwai-ensure-service-deps.mjs services/vision-mcp && npm --prefix ../vision-mcp run build && node ../../scripts/hwai-playwright-vision-proof.mjs",
     "fixtures:real": "node ./scripts/generate-real-fixtures.mjs",
     "smoke": "bash ./scripts/smoke-local.sh",
     "measurement:report": "npm run build && node ./scripts/measurement-report.mjs",

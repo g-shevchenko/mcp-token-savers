@@ -10,7 +10,6 @@ const repoRoot = path.resolve(__dirname, "..");
 const UTILITY_MCP_SERVICES = [
   "retrieval-mcp",
   "context-prep-mcp",
-  "vision-mcp",
   "static-analysis-mcp",
   "agent-trace-mcp",
   "playwright-trace-mcp",

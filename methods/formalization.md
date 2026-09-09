@@ -181,7 +181,6 @@ Empirically, in our 5-MCP measurement (P0–P9a):
 | context-prep-mcp | high | 1.0 | ≈ baseline | yes (B+K+Q) |
 | scraper-mcp.extract_markdown | high | 1.0 | ≈ baseline | yes (B+K+Q) |
 | retrieval-mcp (post-fix) | moderate | 1.0 | n/a (different shape) | yes (K) |
-| vision-mcp | n/a (different shape) | pending live data | n/a | TBD |
 
 (Internal-only specific ratios redacted per `.claude/rules/mcp-stack-moat-guard.md`. Public versions are in `mcp-token-savers/benchmark/` results.)
 

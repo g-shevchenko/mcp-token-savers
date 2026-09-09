@@ -403,13 +403,6 @@ function trafficClass(row) {
   ) {
     return "proof";
   }
-  if (
-    row.service === "vision-mcp" &&
-    ["fetch_image", "image_url_to_text"].includes(row.tool) &&
-    input.url_host
-  ) {
-    return "production_like";
-  }
   return "unknown";
 }
 
@@ -743,10 +736,6 @@ const services = [
   {
     name: "context-prep-mcp",
     requestLogPath: process.env.CONTEXT_PREP_REQUEST_LOG_PATH || homePath(".hwai", "context-prep-mcp", "requests.jsonl"),
-  },
-  {
-    name: "vision-mcp",
-    requestLogPath: process.env.VISION_MCP_REQUEST_LOG_PATH || homePath(".hwai", "vision-mcp", "requests.jsonl"),
   },
   {
     name: "static-analysis-mcp",

@@ -118,7 +118,7 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Keep a growing repo clean | `repo-hygiene-mcp`, `docs-hygiene-mcp`, `docs-sync-mcp` |
 | Review contracts and dependency risk | `contract-schema-mcp`, `dependency-risk-mcp` |
 | Build regression datasets from real misses | `golden-dataset-mcp`, `agent-trace-mcp` |
-| Debug browser traces and visual changes | `playwright-trace-mcp`, `vision-mcp`, `visual-baseline-mcp` |
+| Debug browser traces and visual changes | `playwright-trace-mcp`, `visual-baseline-mcp` |
 | Track test/feature pass-fail contracts between AI agent roles | `test-results-mcp` |
 | Enforce TDD discipline at MCP-tool level (edit gate + test immutability + verify red) | `tdd-gate-mcp` |
 | Property-based testing with hypothesis / fast-check (counterexample extraction) | `pbt-runner-mcp` |

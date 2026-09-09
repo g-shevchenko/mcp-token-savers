@@ -220,7 +220,7 @@ function naturalTriggerTable() {
     "| \"release blocker\", \"missing LICENSE\", \"generated dist committed\", \"public repo hygiene\" | `repo-hygiene-mcp`, `repo-quality-gate-mcp` |",
     "| \"API/schema changed\", \"contract drift\", \"dependency risk\", \"lockfile risk\" | `contract-schema-mcp`, `dependency-risk-mcp` |",
     "| \"Playwright trace\", \"trace.zip\", \"HAR\", \"why did this browser test fail\" | `playwright-trace-mcp`, `agent-trace-mcp` |",
-    "| \"screenshot\", \"visual diff\", \"compare UI\", \"скриншот\", \"визуально проверь\" | `vision-mcp`, `visual-baseline-mcp` |",
+    "| \"screenshot\", \"visual diff\", \"compare UI\", \"скриншот\", \"визуально проверь\" | `visual-baseline-mcp` |",
   ].join("\n");
 }
 

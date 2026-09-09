@@ -43,8 +43,7 @@ Durable local files:
 
 1. Local parser first: unzip/parse `trace.zip`, JSONL, HAR, console/network text.
 2. `context-prep-mcp` next: use the compact markdown artifact when trace text is long or many failures need summarization.
-3. `vision-mcp` next: use `prepare_trace_screenshots` artifacts for screenshot review/crops/diffs.
-4. Scraper plane last: use scraper/fetch/interact only when a failed request or URL needs independent reproduction.
+3. Scraper plane last: use scraper/fetch/interact only when a failed request or URL needs independent reproduction.
 
 The MCP returns `handoff` hints:
 
@@ -93,13 +92,11 @@ Current local proof:
 - real fixture benchmark: 19 cases, 0 failures
 - visual baseline bridge proof: trace screenshot -> baseline approval -> same/changed/explicit-mask/preset-mask/scoped-query/dimension compare, passed
 - agent-trace bridge proof: generated real `trace.zip`/HAR/screenshot -> 4 Playwright tool results -> 1 metadata-only agent session, passed
-- vision bridge proof: trace screenshot artifact -> local one-shot HTTP render -> `vision-mcp.prepare_screenshot`, passed
 - real trace signal: action failure, 2 console errors, 1 network failure, 4 screenshot artifacts
 - real HAR signal: 1 slow request
 - failure-window signal: nearby actions, console errors, network failures, and slow requests around the primary failure are grouped into compact evidence
 - measurement signal: request logs and Pantheon-safe exports include aggregate `failure_window_*` counters only
 - agent-trace safety signal: local agent-trace logs and Pantheon-safe export exclude raw trace paths, raw URLs, and artifact URLs
-- vision safety signal: local vision request log excludes raw trace paths, screenshot paths, source URLs, and Playwright artifact URLs; generated screenshot has no red annotations, so `vision-mcp` correctly returns `requires_clarification=true`
 
 ## Current Role in HWAI Stack
 
@@ -129,7 +126,7 @@ What HWAI intentionally keeps as moat:
 - local trace/HAR/screenshot parsing first
 - no extra paid browser observability infra
 - no raw trace, URL query, screenshot, or artifact leakage to central exports or notification sinks
-- direct handoff to `context-prep-mcp`, `vision-mcp`, and scraper follow-up only when evidence proves it is needed
+- direct handoff to `context-prep-mcp` and scraper follow-up only when evidence proves it is needed
 
 Useful gaps still worth adding later:
 
