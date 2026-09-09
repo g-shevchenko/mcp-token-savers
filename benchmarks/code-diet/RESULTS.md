@@ -443,10 +443,10 @@ Grader: `grade-cd08.mjs` → `results/eval_cd08_<date>.json`.
 | Measurement | Corpus | Result | Verdict |
 |---|---|---|---|
 | FP-floor | code-diet src (fresh repo) + clean corpus | 0 findings on fresh files | **PASS (0 FP)** |
-| recall | greg-personal-claude `scripts/*.mjs` (1101 files, real ages) | 31/31 stale (>90d) flagged | **recall 1.0, 0 FP on fresh** |
+| recall | mature repo `scripts/*.mjs` (1101 files, real ages) | 31/31 stale (>90d) flagged | **recall 1.0, 0 FP on fresh** |
 
 The fresh-repo corpus yields recall n/a (no stale files) — reported as n/a, not
-as a pass. The real recall signal comes from the mature greg-personal-claude
+as a pass. The real recall signal comes from the mature
 repo: every file with git age > 90d is flagged, and no fresh file is.
 
 ## 10. Section list (for the evidence packet)

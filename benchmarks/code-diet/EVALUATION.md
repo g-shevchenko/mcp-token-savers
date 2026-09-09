@@ -561,7 +561,7 @@ later paths flagged. Cross-file via `corpusFiles`. Measured by `grade-cd07.mjs`:
 (confidence 0.5), never a deletion verdict. Measured by `grade-cd08.mjs`:
 
 - FP-floor 0 on fresh files (code-diet src + clean corpus).
-- recall on the mature greg-personal-claude repo (`scripts/*.mjs`, 1101 files, real
+- recall on the mature repo (`scripts/*.mjs`, 1101 files, real
   `git log` ages): 31/31 stale (>90d) files flagged, 0 FP on fresh -> recall 1.0.
 
 Full tables: `RESULTS.md` §15, §16. Grader JSON: `results/eval_cd07_<date>.json`,
