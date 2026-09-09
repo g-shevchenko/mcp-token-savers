@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "test": "npm run build && node --test tests/*.test.mjs",
     "smoke": "bash ./scripts/smoke-local.sh",
+    "measurement:report": "node ./scripts/measurement-report.mjs",
     "prepare": "npm run build"
   },
   "bin": {
