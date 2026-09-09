@@ -21,7 +21,7 @@ MCPs by default, and it does not require API keys for the default or full
 profile.
 
 > **Deep-dive write-up:** *How I cut my Claude Code token usage by 75.5% with
-> 17 local MCPs* — public research article with the pattern, the measured
+> 21 local MCPs* — public research article with the pattern, the measured
 > numbers, and the comparison against Cursor, Cody, Continue, Aider,
 > Firecrawl, LLMLingua, Martian, RouteLLM, Helicone, Langfuse, and the
 > Anthropic / Cloudflare *Code Execution with MCP* primary sources.
@@ -39,7 +39,7 @@ tools:
 - keep raw local evidence local by default;
 - work across Claude Code, Codex, Cursor, and Windsurf with the same MCP config.
 
-In product terms, the 17 local MCP servers are modules behind one Token
+In product terms, the 21 local MCP servers are modules behind one Token
 Efficiency Platform. Agents should experience one workflow: classify the task,
 prepare the right compact local evidence, and reserve frontier model context for
 judgment rather than raw search, logs, traces, or screenshots.
@@ -79,7 +79,7 @@ HWAI_MCP_BRANCH=76540dcfbcd12284fc2b783d22c5c091624eaf82 \
 /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/76540dcfbcd12284fc2b783d22c5c091624eaf82/install.sh)"
 ```
 
-Install all 17 local MCP servers:
+Install all 21 local MCP servers:
 
 ```bash
 HWAI_MCP_PROFILE=full /bin/bash -lc "$(curl -fsSL https://raw.githubusercontent.com/g-shevchenko/mcp-token-savers/main/install.sh)"
@@ -112,6 +112,7 @@ config-only repair, set `HWAI_MCP_AGENT_DOCS=skip`.
 | Need | MCPs |
 | --- | --- |
 | Route ambiguous agent tasks to the right prep tool | **HWAI Context Router** via `router-lite-mcp` |
+| Route compression to the Pareto-best deterministic compressor | `mcp-token-router` |
 | Retrieve compact repo context before edits | `retrieval-mcp`, `context-prep-mcp` |
 | Understand code structure and history | `language-graph-mcp`, `repo-history-mcp` |
 | Run local static checks and quality gates | `static-analysis-mcp`, `repo-quality-gate-mcp` |
@@ -142,8 +143,9 @@ compressors inflate short inputs by adding wrapper sections).
 The philosophy: **measurement is the moat, not the compressor.**
 - Tools like `mcp-sophon` (below) are valuable in their regime.
 - The agency value is knowing *when* to call which one.
-- That routing intelligence is HWAI's internal stack; this public repo
-  exposes the measured vendor candidates, not the routing engine.
+- The routing engine is now public as `mcp-token-router` — see
+  [`services/mcp-token-router/`](mcp/source/services/mcp-token-router/README.md)
+  for the deterministic routing rules and bundled compressor runners.
 
 A long-form write-up of the methodology and per-tier measurements lives
 at the [research article](https://gregshevchenko.com/research/mcp-stack-token-economy/).
@@ -246,10 +248,10 @@ against documented CV/ratio/quality bars.
 
 | Profile | Installs | Best for |
 | --- | ---: | --- |
-| `core` | 6 MCPs | First install, safe local repo work |
-| `repo` | 17 MCPs | Large codebases, docs, hygiene, local regression cases |
+| `core` | 7 MCPs | First install, safe local repo work |
+| `repo` | 18 MCPs | Large codebases, docs, hygiene, local regression cases |
 | `browser-debug` | 10 MCPs | Playwright traces, screenshots, visual checks |
-| `full` | 20 MCPs | All local token-efficiency MCPs, no external context required |
+| `full` | 21 MCPs | All local token-efficiency MCPs, no external context required |
 
 ## Verification
 
