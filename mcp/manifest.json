@@ -23,9 +23,10 @@
   },
   "profiles": {
     "core": {
-      "description": "Small default profile for daily agent work: routing, repo retrieval, noisy context prep, and deterministic checks.",
+      "description": "Small default profile for daily agent work: routing, compressor routing, repo retrieval, noisy context prep, and deterministic checks.",
       "services": [
         "router-lite-mcp",
+        "mcp-token-router",
         "retrieval-mcp",
         "context-prep-mcp",
         "static-analysis-mcp",
@@ -211,6 +212,13 @@
       "service_dir": "services/pbt-runner-mcp",
       "stdio": "services/pbt-runner-mcp/scripts/local-stdio.sh",
       "cache_dir": "$HOME/.hwai/pbt-runner-mcp",
+      "category": "local-utility"
+    },
+    "mcp-token-router": {
+      "client_name": "mcp_token_router",
+      "service_dir": "services/mcp-token-router",
+      "stdio": "services/mcp-token-router/scripts/local-stdio.sh",
+      "cache_dir": "$HOME/.hwai/mcp-token-router",
       "category": "local-utility"
     }
   }
