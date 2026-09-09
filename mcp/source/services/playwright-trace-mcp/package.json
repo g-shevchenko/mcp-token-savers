@@ -20,9 +20,9 @@
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
-    "playwright": "^1.60.0",
-    "typescript": "^6.0.3"
+    "@types/node": "^26.4.1",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2"
   },
   "keywords": [
     "mcp",
