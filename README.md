@@ -27,6 +27,12 @@ profile.
 > Anthropic / Cloudflare *Code Execution with MCP* primary sources.
 > [Read it on gregshevchenko.com](https://gregshevchenko.com/research/mcp-stack-token-economy/).
 
+> **Routing engine deep-dive:** *MCP Token Router: measurement-driven
+> compressor routing* — how the deterministic router picks the cheapest
+> sufficient compressor per request, with the decision tree, the fallback
+> ladder, and measured token savings per route.
+> [Read it on gregshevchenko.com](https://gregshevchenko.com/research/mcp-token-router-routing-engine/).
+
 ## Why
 
 Modern coding agents are strongest when they see the right evidence, not the
