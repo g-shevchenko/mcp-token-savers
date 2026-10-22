@@ -24,7 +24,7 @@ Usage: ./install.sh [options]
 
 Options:
   --profile=core|repo|browser-debug|full   Default: core
-  --clients=auto|claude,codex,cursor,windsurf               Default: auto
+  --clients=auto|claude,codex,cursor,windsurf,devin               Default: auto
   --workspace=/absolute/project/path                        Default: current dir
   --repo-dir=/absolute/path                                 Default: ~/.hwai/hwai-mcp-stack
   --repo-url=https://github.com/OWNER/REPO.git              Default: public repo URL
@@ -108,7 +108,7 @@ case "$PROFILE" in
 esac
 
 case "$CLIENTS" in
-  auto|claude|codex|cursor|windsurf|*,*) ;;
+  auto|claude|codex|cursor|windsurf|devin|*,*) ;;
   *) die "Unknown clients value: $CLIENTS" ;;
 esac
 

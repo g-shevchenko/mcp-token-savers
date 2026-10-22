@@ -437,3 +437,9 @@ A custom MCP scope manifest can be passed with
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+### Devin Desktop / CLI
+
+The installer also supports `--clients=devin`, using `.devin/mcp_config.json`
+and managed `AGENTS.md` guidance. See [Devin setup](docs/devin.md). Restart or
+open a new chat after installing; legacy Windsurf config is a separate surface.
