@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import childProcess from "node:child_process";
 
-const DEFAULT_CLIENTS = ["claude", "codex", "cursor", "windsurf"];
+const DEFAULT_CLIENTS = ["claude", "codex", "cursor", "windsurf", "devin"];
 const DEFAULT_PROFILE = "core";
 const AGENT_DOCS_BEGIN = "<!-- BEGIN HUMANSWITHAI_MCP_AUTOPILOT -->";
 const AGENT_DOCS_END = "<!-- END HUMANSWITHAI_MCP_AUTOPILOT -->";
@@ -331,7 +331,7 @@ function installAgentDocs({ workspace, profile, clients, services, dryRun, mode 
   const context = { profile, clients, services };
   writeTextIfChanged(path.join(workspace, "docs", "humanswithai-mcp-stack.md"), markdownDoc(context), dryRun);
 
-  if (clients.includes("codex")) {
+  if (clients.includes("codex") || clients.includes("devin")) {
     upsertManagedBlock(path.join(workspace, "AGENTS.md"), agentAutopilotBlock(context), dryRun);
   }
   if (clients.includes("claude")) {
@@ -456,12 +456,14 @@ function install() {
     if (client === "claude") installClaude(workspace, items, dryRun);
     else if (client === "codex") installCodex(items, dryRun);
     else if (client === "cursor") installProjectJson(path.join(workspace, ".cursor", "mcp.json"), items, dryRun);
+    else if (client === "devin") installProjectJson(path.join(workspace, ".devin", "mcp_config.json"), items, dryRun);
     else if (client === "windsurf") installProjectJson(path.join(workspace, ".windsurf", "mcp.json"), items, dryRun);
     else throw new Error(`unknown client: ${client}`);
   }
 
   installAgentDocs({ workspace, profile, clients, services, dryRun, mode: agentDocs });
-  doctor({ manifest, sourceRoot, services });
+  if (!dryRun) doctor({ manifest, sourceRoot, services });
+  else console.log("Dry-run only: runtime doctor deferred until installation/build.");
   console.log("HWAI MCP stack install complete. Restart clients or open a new chat so stdio MCP configs reload.");
 }
 
