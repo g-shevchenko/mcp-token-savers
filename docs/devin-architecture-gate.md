@@ -11,3 +11,8 @@ Runtime: installation only; dry-run does not claim built-service health.
 Human gate: no credentials/accounts changed; public release follows repository audit.
 Rollback: remove installed project entries/managed block using backup if needed;
 no global client config changes. No private runtime code is included.
+
+CI service builds have a 12-minute job cap and bounded registry fetches with HTTP
+progress logs. npm ci keeps lockfile integrity checks; its informational audit is
+disabled in the build lane (it did not fail builds on advisories). Public audit,
+CodeQL and dependency update workflows remain required.
