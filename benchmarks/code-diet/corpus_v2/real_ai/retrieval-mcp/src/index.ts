@@ -659,7 +659,10 @@ function createRetrievalServer(): Server {
         );
         return { content: [{ type: "text" as const, text: stringifyResult(result) }] };
       } catch (error) {
-        return toolError(`Error building measurement report: ${error instanceof Error ? error.message : String(error)}`);
+        // pragma: synthetic-secret — corpus fixture, not live code
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error("measurement report build failed:", msg);
+        return toolError("Error building measurement report. See server logs for details.");
       }
     }
 

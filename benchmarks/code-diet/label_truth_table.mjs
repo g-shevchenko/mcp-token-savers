@@ -75,7 +75,7 @@ function stripNonCode(text) {
   return out;
 }
 
-function escapeRe(s) { return s.replace(/[$]/g, "\\$"); }
+function escapeRe(s) { return s.replace(/[\\$]/g, "\\$&"); }
 
 const files = [...walk(CLEAN)].filter((f) => f.rel !== "manifest.json");
 const rawByRel = new Map(files.map((f) => [f.rel, fs.readFileSync(f.full, "utf8")]));

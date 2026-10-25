@@ -388,7 +388,7 @@ export async function detectUnusedExports(
   for (const name of exportedNames(text)) {
     if (publicNames.has(name)) continue; // re-exported by a barrel elsewhere
     if (isEntryPoint) continue; // the entry point's own exports are the API
-    const ref = new RegExp(`\\b${name.replace(/[$]/g, "\\$")}\\b`, "g");
+    const ref = new RegExp(`\\b${name.replace(/[\\$]/g, "\\$&")}\\b`, "g");
     let count = 0;
     for (const src of corpusForRefs) count += (src.match(ref) || []).length;
     // 1 occurrence = the declaration itself; >1 means referenced somewhere.
