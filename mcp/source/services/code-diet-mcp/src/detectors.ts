@@ -349,6 +349,11 @@ export interface LanguageGraphOracle {
 // and only reports findings the graph confirms as having no cross-file references.
 // This eliminates the text-based FP classes (locale collisions, namespace imports,
 // star-barrels) at the cost of an async oracle call per candidate.
+/** Escape every RegExp metacharacter so a name is matched literally. */
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function detectUnusedExports(
   text: string,
   allSources: string[],
@@ -388,7 +393,8 @@ export async function detectUnusedExports(
   for (const name of exportedNames(text)) {
     if (publicNames.has(name)) continue; // re-exported by a barrel elsewhere
     if (isEntryPoint) continue; // the entry point's own exports are the API
-    const ref = new RegExp(`\\b${name.replace(/[$]/g, "\\$")}\\b`, "g");
+    // `$` is an identifier char, so `\b` cannot anchor a name that starts with it.
+    const ref = new RegExp(`(?<![\\w$])${escapeRegExp(name)}(?![\\w$])`, "g");
     let count = 0;
     for (const src of corpusForRefs) count += (src.match(ref) || []).length;
     // 1 occurrence = the declaration itself; >1 means referenced somewhere.
@@ -449,9 +455,9 @@ export function detectAbstractionBloat(text: string, allSources: string[]): Find
     let implCount = 0;
     let typeUseCount = 0;
     for (const src of corpus) {
-      implCount += (src.match(new RegExp(`\\bimplements\\s+${name}\\b`, "g")) || []).length;
+      implCount += (src.match(new RegExp(`\\bimplements\\s+${escapeRegExp(name)}(?![\\w$])`, "g")) || []).length;
       // polymorphic use = the interface name appears as a type annotation / generic arg
-      typeUseCount += (src.match(new RegExp(`[:<(,]\\s*${name}\\b`, "g")) || []).length;
+      typeUseCount += (src.match(new RegExp(`[:<(,]\\s*${escapeRegExp(name)}(?![\\w$])`, "g")) || []).length;
     }
     if (implCount === 1 && typeUseCount === 0) {
       findings.push({
