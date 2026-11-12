@@ -35,14 +35,21 @@ jobs:
     # privileged trigger; never run on arbitrary-author PRs.
     if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
+      # Grouped PRs spanning many directories carry no metadata block in the
+      # commit message, and fetch-metadata then exits 1 ("PR does not contain
+      # metadata, nothing to do"). Missing metadata is a review case, not a
+      # failure: the eligibility check below needs both outputs, so such a PR
+      # can never be auto-merged — it just stops reporting a red check.
       - name: Fetch Dependabot metadata
         id: metadata
+        continue-on-error: true
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98  # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Auto-merge dev-deps minor + patch
         if: |
+          steps.metadata.outcome == 'success' &&
           steps.metadata.outputs.dependency-type == 'direct:development' &&
           (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
            steps.metadata.outputs.update-type == 'version-update:semver-patch')
@@ -57,10 +64,12 @@ jobs:
 
       - name: Skip (not eligible for auto-merge)
         if: |
+          steps.metadata.outcome != 'success' ||
           steps.metadata.outputs.dependency-type != 'direct:development' ||
           (steps.metadata.outputs.update-type != 'version-update:semver-minor' &&
            steps.metadata.outputs.update-type != 'version-update:semver-patch')
         run: |
           echo "Not auto-merging: requires human review."
+          echo "  metadata step:   ${{ steps.metadata.outcome }}"
           echo "  dependency-type: ${{ steps.metadata.outputs.dependency-type }}"
           echo "  update-type:     ${{ steps.metadata.outputs.update-type }}"
