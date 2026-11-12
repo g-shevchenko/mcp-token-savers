@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Use Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: "22"
       - name: Run release audit
@@ -47,7 +47,7 @@ jobs:
           } > RELEASE_PROOF.md
           sha256sum "$archive" sbom.cdx.json RELEASE_PROOF.md > SHA256SUMS
       - name: Attest archive
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:
           subject-path: |
             hwai-mcp-stack-${{ github.ref_name }}.tar.gz
