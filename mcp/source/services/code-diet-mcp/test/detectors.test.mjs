@@ -394,3 +394,17 @@ test("CD08 stale file: no git-age signal -> detector is inert (spec §8 no FS)",
   const cd08 = findings.filter((f) => f.id === "CD08");
   assert.equal(cd08.length, 0, `without injected git ages CD08 must be inert, got ${JSON.stringify(cd08)}`);
 });
+
+// CodeQL js/incomplete-sanitization (#36): the reference regex is built from an
+// export name. `$` is a legal identifier character, so names with `$` anywhere —
+// including the first position, where `\b` has no word character to anchor on —
+// must still be counted as referenced.
+test("CD03 counts references to export names containing $", async () => {
+  const lib = `export function foo$bar() {}\nexport const $store = 1;\nexport function $dead() {}\n`;
+  const user = `import { foo$bar, $store } from "./lib.js";\nfoo$bar($store);\n`;
+  const findings = await analyzeSource(lib, "lib.ts", { allSources: [lib, user] });
+  const flagged = (n) => findings.some((f) => f.id === "CD03" && f.message.includes(n));
+  assert.equal(flagged("foo$bar"), false, "referenced foo$bar must not be flagged");
+  assert.equal(flagged("$store"), false, "referenced $store must not be flagged");
+  assert.equal(flagged("$dead"), true, "unreferenced $dead must still be flagged");
+});
